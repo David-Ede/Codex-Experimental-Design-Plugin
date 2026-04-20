@@ -48,27 +48,77 @@ export default function App() {
 
   return (
     <div className="app-shell">
-      <StudyHeader payload={validation.data} fixtureName={fixtureName} />
-      <WarningStrip payload={validation.data} />
-      <nav className="tabs" aria-label="Dashboard sections" role="tablist">
+      <Sidebar payload={validation.data} activeTab={activeTab} setActiveTab={setActiveTab} />
+      <div className="dashboard-main">
+        <TopBar payload={validation.data} fixtureName={fixtureName} />
+        <StudyHeader payload={validation.data} fixtureName={fixtureName} />
+        <WarningStrip payload={validation.data} />
+        <main className="workspace">
+          <DashboardContent payload={validation.data} activeTab={activeTab} />
+        </main>
+        <PayloadFooter payload={validation.data} />
+      </div>
+    </div>
+  );
+}
+
+function Sidebar({
+  payload,
+  activeTab,
+  setActiveTab
+}: {
+  payload: DashboardPayload;
+  activeTab: TabId;
+  setActiveTab: (tabId: TabId) => void;
+}) {
+  return (
+    <aside className="sidebar" aria-label="Dashboard navigation">
+      <div className="brand-lockup">
+        <span className="brand-mark" aria-hidden="true">
+          D
+        </span>
+        <strong>DOE X</strong>
+      </div>
+      <div className="sidebar-search">Search study payload...</div>
+      <nav className="sidebar-tabs" aria-label="Dashboard sections" role="tablist">
         {tabs.map((tab) => (
           <button
             key={tab.id}
             aria-selected={activeTab === tab.id}
-            className="tab"
+            className="sidebar-tab"
             role="tab"
             type="button"
             onClick={() => setActiveTab(tab.id)}
           >
             <span>{tab.label}</span>
-            <AvailabilityDot availability={validation.data.sections[tab.section]} />
+            <AvailabilityDot availability={payload.sections[tab.section]} />
           </button>
         ))}
       </nav>
-      <main className="workspace">
-        <DashboardContent payload={validation.data} activeTab={activeTab} />
-      </main>
-      <PayloadFooter payload={validation.data} />
+      <div className="sidebar-account">
+        <span className="avatar" aria-hidden="true">
+          DS
+        </span>
+        <div>
+          <strong>{payload.study?.study_id ?? "No study"}</strong>
+          <span>{payload.study?.status ?? "unavailable"}</span>
+        </div>
+      </div>
+    </aside>
+  );
+}
+
+function TopBar({ payload, fixtureName }: { payload: DashboardPayload; fixtureName: FixtureName }) {
+  return (
+    <div className="top-bar">
+      <div className="breadcrumb">Dashboard / Reports</div>
+      <div className="top-actions">
+        <span className="top-pill">Fixture: {fixtureName}</span>
+        <span className="notification-dot" aria-label="Payload ready" />
+        <span className="avatar avatar--small" aria-hidden="true">
+          {payload.study?.study_id.slice(0, 2).toUpperCase() ?? "NA"}
+        </span>
+      </div>
     </div>
   );
 }
@@ -169,6 +219,7 @@ function Overview({ payload }: { payload: DashboardPayload }) {
         <Metric label="Rows" value={String(rows.length)} detail={firstDesign?.design_id ?? "no matrix"} />
         <Metric label="Warnings" value={String(payload.warnings.length)} detail="payload warnings" />
       </div>
+      <OverviewVisuals payload={payload} />
       <div className="status-table-wrap">
         <table className="status-table">
           <thead>
@@ -194,6 +245,49 @@ function Overview({ payload }: { payload: DashboardPayload }) {
         </table>
       </div>
     </section>
+  );
+}
+
+function OverviewVisuals({ payload }: { payload: DashboardPayload }) {
+  const sections = Object.values(payload.sections);
+  const availableCount = sections.filter((section) => section.status === "available").length;
+  const totalCount = sections.length || 1;
+  const availablePercent = Math.round((availableCount / totalCount) * 100);
+
+  return (
+    <div className="visual-grid" aria-label="Dashboard visual summaries">
+      <section className="visual-card" aria-label="Gate availability">
+        <div className="section-heading section-heading--compact">
+          <h3>Gate availability</h3>
+          <span className="top-pill">{availablePercent}% available</span>
+        </div>
+        <div className="donut-wrap">
+          <div className="donut" style={{ "--value": `${availablePercent}%` } as React.CSSProperties}>
+            <strong>{availableCount}</strong>
+            <span>of {totalCount}</span>
+          </div>
+          <div className="donut-legend">
+            <span>Available sections</span>
+            <span>Unavailable states remain explicit</span>
+          </div>
+        </div>
+      </section>
+      <section className="visual-card" aria-label="Artifact coverage">
+        <div className="section-heading section-heading--compact">
+          <h3>Artifact coverage</h3>
+          <span className="top-pill">{payload.payload_metadata.source_artifacts.length} sources</span>
+        </div>
+        <div className="bar-stack" aria-hidden="true">
+          {payload.payload_metadata.source_artifacts.map((artifact, index) => (
+            <span
+              key={`${artifact.artifact_type}-${artifact.path}`}
+              style={{ width: `${46 + index * 16}%` }}
+            />
+          ))}
+          {payload.payload_metadata.source_artifacts.length === 0 ? <span style={{ width: "18%" }} /> : null}
+        </div>
+      </section>
+    </div>
   );
 }
 
