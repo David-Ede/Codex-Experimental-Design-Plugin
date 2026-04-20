@@ -1,0 +1,73 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "study.schema.json",
+  "title": "Study Artifact",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["artifact_metadata", "study"],
+  "properties": {
+    "artifact_metadata": {
+      "$ref": "artifact_metadata.schema.json"
+    },
+    "study": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "study_id",
+        "title",
+        "domain_template",
+        "status",
+        "created_at",
+        "updated_at",
+        "active_design_id",
+        "active_fit_id",
+        "active_construct_id",
+        "artifact_index"
+      ],
+      "properties": {
+        "study_id": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]*[a-z0-9]$"
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1
+        },
+        "domain_template": {
+          "type": "string",
+          "minLength": 1
+        },
+        "status": {
+          "type": "string",
+          "enum": ["active", "archived", "superseded", "failed_validation"]
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updated_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "active_design_id": {
+          "type": ["string", "null"]
+        },
+        "active_fit_id": {
+          "type": ["string", "null"]
+        },
+        "active_construct_id": {
+          "type": ["string", "null"]
+        },
+        "artifact_index": {
+          "type": "array",
+          "items": {
+            "type": "object"
+          }
+        },
+        "metadata": {
+          "type": "object"
+        }
+      }
+    }
+  }
+}

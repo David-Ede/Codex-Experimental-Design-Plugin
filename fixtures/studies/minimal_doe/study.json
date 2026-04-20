@@ -1,0 +1,40 @@
+{
+  "artifact_metadata": {
+    "artifact_hash": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+    "artifact_id": "artifact_study_minimal",
+    "artifact_type": "study",
+    "generated_at": "2026-04-20T19:00:00Z",
+    "input_hash": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+    "method_version": "1.0.0",
+    "run_id": "run_20260420_190000_gate0",
+    "schema_version": "1.0.0",
+    "study_id": "minimal_doe",
+    "tool_name": "create_or_update_study",
+    "tool_version": "0.1.0",
+    "warnings": []
+  },
+  "study": {
+    "active_construct_id": null,
+    "active_design_id": "design_phase0_skeleton",
+    "active_fit_id": null,
+    "artifact_index": [
+      {
+        "artifact_type": "factor_space",
+        "path": "fixtures/studies/minimal_doe/factor_space.json"
+      },
+      {
+        "artifact_type": "responses",
+        "path": "fixtures/studies/minimal_doe/responses.json"
+      }
+    ],
+    "created_at": "2026-04-20T19:00:00Z",
+    "domain_template": "ivt_qbd",
+    "metadata": {
+      "fixture": true
+    },
+    "status": "active",
+    "study_id": "minimal_doe",
+    "title": "Minimal DOE Gate 0 Fixture",
+    "updated_at": "2026-04-20T19:05:00Z"
+  }
+}

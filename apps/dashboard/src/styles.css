@@ -1,0 +1,402 @@
+:root {
+  color: #16202a;
+  background: #f6f8fb;
+  font-family:
+    Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-synthesis: none;
+  line-height: 1.5;
+  text-rendering: optimizeLegibility;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+}
+
+button {
+  font: inherit;
+}
+
+.app-shell {
+  min-height: 100vh;
+  background: #f6f8fb;
+}
+
+.app-shell--single {
+  display: grid;
+  align-items: center;
+  padding: 32px;
+}
+
+.study-header {
+  display: grid;
+  grid-template-columns: minmax(260px, 1fr) minmax(340px, 0.95fr);
+  gap: 24px;
+  align-items: end;
+  padding: 28px clamp(18px, 4vw, 48px);
+  color: #f8fbff;
+  background: #16202a;
+  border-bottom: 4px solid #2c8a7d;
+}
+
+.eyebrow {
+  margin: 0 0 8px;
+  color: #5fb6a7;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+h1,
+h2,
+h3,
+p {
+  margin-top: 0;
+}
+
+h1 {
+  margin-bottom: 0;
+  font-size: 2rem;
+  line-height: 1.15;
+}
+
+h2 {
+  margin-bottom: 4px;
+  font-size: 1.2rem;
+}
+
+h3 {
+  margin-bottom: 12px;
+  font-size: 1rem;
+}
+
+.header-facts,
+.availability-details {
+  display: grid;
+  gap: 12px;
+  margin: 0;
+}
+
+.header-facts {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+dt {
+  color: #6e7f90;
+  font-size: 0.74rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.study-header dt {
+  color: #8fb6c2;
+}
+
+dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+  font-variant-numeric: tabular-nums;
+}
+
+.status-strip {
+  padding: 12px clamp(18px, 4vw, 48px);
+  color: #4b2300;
+  background: #ffe9c2;
+  border-bottom: 1px solid #e3b75d;
+}
+
+.status-strip--clear {
+  color: #16453f;
+  background: #dff5ef;
+  border-color: #a7d8ce;
+}
+
+.status-strip p {
+  margin: 0;
+}
+
+.tabs {
+  display: flex;
+  gap: 4px;
+  overflow-x: auto;
+  padding: 10px clamp(18px, 4vw, 48px) 0;
+  background: #ffffff;
+  border-bottom: 1px solid #d8e0e8;
+}
+
+.tab {
+  display: inline-flex;
+  gap: 8px;
+  align-items: center;
+  min-height: 42px;
+  padding: 0 14px;
+  white-space: nowrap;
+  color: #34495c;
+  background: transparent;
+  border: 0;
+  border-bottom: 3px solid transparent;
+  cursor: pointer;
+}
+
+.tab[aria-selected="true"] {
+  color: #0f374f;
+  border-bottom-color: #2c8a7d;
+}
+
+.tab:focus-visible {
+  outline: 3px solid #2d6cdf;
+  outline-offset: 2px;
+}
+
+.availability-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 999px;
+  background: #6e7f90;
+}
+
+.availability-dot--available {
+  background: #237b4b;
+}
+
+.availability-dot--unavailable_missing_input,
+.availability-dot--unavailable_not_run {
+  background: #d18a00;
+}
+
+.availability-dot--unavailable_failed_validation {
+  background: #c93c37;
+}
+
+.availability-dot--unavailable_unsupported {
+  background: #6e7f90;
+}
+
+.workspace {
+  padding: 24px clamp(18px, 4vw, 48px) 32px;
+}
+
+.panel {
+  padding: 24px 0;
+  border-top: 1px solid #d8e0e8;
+}
+
+.panel:first-child {
+  border-top: 0;
+}
+
+.panel--availability,
+.panel--error {
+  max-width: 960px;
+  padding: 28px;
+  background: #ffffff;
+  border: 1px solid #d8e0e8;
+  border-radius: 8px;
+}
+
+.panel--error {
+  border-color: #d85a4e;
+}
+
+.section-heading {
+  display: flex;
+  gap: 16px;
+  align-items: start;
+  justify-content: space-between;
+  margin-bottom: 18px;
+}
+
+.section-heading p {
+  max-width: 720px;
+  margin-bottom: 0;
+  color: #526577;
+}
+
+.metric-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 22px;
+}
+
+.metric {
+  min-height: 112px;
+  padding: 16px;
+  background: #ffffff;
+  border: 1px solid #d8e0e8;
+  border-radius: 8px;
+}
+
+.metric span,
+.metric small {
+  display: block;
+  color: #526577;
+}
+
+.metric strong {
+  display: block;
+  margin: 8px 0;
+  color: #16202a;
+  font-size: 2rem;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+.status-table-wrap,
+.matrix-wrap {
+  overflow-x: auto;
+  background: #ffffff;
+  border: 1px solid #d8e0e8;
+  border-radius: 8px;
+}
+
+table {
+  width: 100%;
+  min-width: 760px;
+  border-collapse: collapse;
+  font-size: 0.92rem;
+}
+
+th,
+td {
+  padding: 11px 12px;
+  text-align: left;
+  vertical-align: top;
+  border-bottom: 1px solid #e6ecf2;
+}
+
+th {
+  color: #405467;
+  background: #eef3f7;
+  font-size: 0.78rem;
+  text-transform: uppercase;
+}
+
+td {
+  font-variant-numeric: tabular-nums;
+}
+
+tr:last-child td {
+  border-bottom: 0;
+}
+
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  padding: 2px 8px;
+  color: #34495c;
+  background: #e8eef4;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.status-badge--available {
+  color: #0d4d2f;
+  background: #dff5e8;
+}
+
+.status-badge--unavailable_missing_input,
+.status-badge--unavailable_not_run {
+  color: #5a3700;
+  background: #ffe9c2;
+}
+
+.status-badge--unavailable_failed_validation {
+  color: #6a1815;
+  background: #ffe0dd;
+}
+
+.diagnostics-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr);
+  gap: 18px;
+}
+
+.diagnostic-block {
+  min-width: 0;
+  padding: 18px;
+  background: #ffffff;
+  border: 1px solid #d8e0e8;
+  border-radius: 8px;
+}
+
+.artifact-list {
+  display: grid;
+  gap: 10px;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.artifact-list li {
+  display: grid;
+  gap: 4px;
+}
+
+.artifact-list span {
+  overflow-wrap: anywhere;
+  color: #526577;
+}
+
+.payload-footer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  padding: 14px clamp(18px, 4vw, 48px);
+  color: #526577;
+  background: #ffffff;
+  border-top: 1px solid #d8e0e8;
+  font-size: 0.82rem;
+}
+
+.panel .payload-footer {
+  padding: 14px 0 0;
+  border-top: 0;
+}
+
+@media (max-width: 920px) {
+  .study-header,
+  .diagnostics-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .metric-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 560px) {
+  .app-shell--single,
+  .workspace {
+    padding: 18px;
+  }
+
+  .study-header {
+    padding: 22px 18px;
+  }
+
+  .header-facts,
+  .metric-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .section-heading {
+    display: block;
+  }
+
+  .panel--availability,
+  .panel--error {
+    padding: 20px;
+  }
+
+  h1 {
+    font-size: 1.55rem;
+  }
+}

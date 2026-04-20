@@ -1,0 +1,163 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "dashboard_payload.schema.json",
+  "title": "Dashboard Payload",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "version",
+    "payload_metadata",
+    "study",
+    "factor_space",
+    "responses",
+    "constructs",
+    "designs",
+    "observations",
+    "models",
+    "derived",
+    "dashboard_state",
+    "sections",
+    "warnings",
+    "audit"
+  ],
+  "properties": {
+    "version": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+    },
+    "payload_metadata": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "payload_id",
+        "study_id",
+        "run_id",
+        "generated_at",
+        "schema_version",
+        "payload_hash",
+        "source_artifacts"
+      ],
+      "properties": {
+        "payload_id": {
+          "type": "string"
+        },
+        "study_id": {
+          "type": ["string", "null"],
+          "pattern": "^[a-z][a-z0-9_]*[a-z0-9]$"
+        },
+        "run_id": {
+          "type": "string",
+          "pattern": "^run_[a-z0-9_]+$"
+        },
+        "generated_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "schema_version": {
+          "type": "string",
+          "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+        },
+        "payload_hash": {
+          "type": "string",
+          "pattern": "^sha256:[a-f0-9]{64}$"
+        },
+        "source_artifacts": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["artifact_type", "path", "artifact_hash"],
+            "properties": {
+              "artifact_type": {
+                "type": "string"
+              },
+              "path": {
+                "type": "string"
+              },
+              "artifact_hash": {
+                "type": "string",
+                "pattern": "^sha256:[a-f0-9]{64}$"
+              }
+            }
+          }
+        }
+      }
+    },
+    "study": {
+      "type": ["object", "null"]
+    },
+    "factor_space": {
+      "type": ["object", "null"]
+    },
+    "responses": {
+      "type": "array"
+    },
+    "constructs": {
+      "type": "array"
+    },
+    "designs": {
+      "type": "array"
+    },
+    "observations": {
+      "type": "object"
+    },
+    "models": {
+      "type": "array"
+    },
+    "derived": {
+      "type": "object"
+    },
+    "dashboard_state": {
+      "type": "object"
+    },
+    "sections": {
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "dashboard_payload.schema.json#/$defs/availability"
+      }
+    },
+    "warnings": {
+      "type": "array",
+      "items": {
+        "$ref": "warning.schema.json"
+      }
+    },
+    "audit": {
+      "type": "object"
+    }
+  },
+  "$defs": {
+    "availability": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "reason", "required_inputs", "source_artifacts"],
+      "properties": {
+        "status": {
+          "type": "string",
+          "enum": [
+            "available",
+            "unavailable_missing_input",
+            "unavailable_not_run",
+            "unavailable_failed_validation",
+            "unavailable_unsupported"
+          ]
+        },
+        "reason": {
+          "type": ["string", "null"]
+        },
+        "required_inputs": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "source_artifacts": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,63 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "tool_envelope.schema.json",
+  "title": "MCP Tool Output Envelope",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "study_id",
+    "run_id",
+    "status",
+    "summary",
+    "artifact_paths",
+    "artifact_hashes",
+    "warnings",
+    "errors",
+    "structured_content"
+  ],
+  "properties": {
+    "study_id": {
+      "type": ["string", "null"],
+      "pattern": "^[a-z][a-z0-9_]*[a-z0-9]$"
+    },
+    "run_id": {
+      "type": "string",
+      "pattern": "^run_[a-z0-9_]+$"
+    },
+    "status": {
+      "type": "string",
+      "enum": ["success", "success_with_warnings", "failed_validation", "failed_runtime", "skipped"]
+    },
+    "summary": {
+      "type": "string"
+    },
+    "artifact_paths": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "artifact_hashes": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string",
+        "pattern": "^sha256:[a-f0-9]{64}$"
+      }
+    },
+    "warnings": {
+      "type": "array",
+      "items": {
+        "$ref": "warning.schema.json"
+      }
+    },
+    "errors": {
+      "type": "array",
+      "items": {
+        "$ref": "error.schema.json"
+      }
+    },
+    "structured_content": {
+      "type": "object"
+    }
+  }
+}

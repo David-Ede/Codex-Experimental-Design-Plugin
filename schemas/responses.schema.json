@@ -1,0 +1,77 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "responses.schema.json",
+  "title": "Responses Artifact",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["artifact_metadata", "responses"],
+  "properties": {
+    "artifact_metadata": {
+      "$ref": "artifact_metadata.schema.json"
+    },
+    "responses": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "response_id",
+          "name",
+          "display_name",
+          "role",
+          "value_type",
+          "goal",
+          "units",
+          "weight",
+          "threshold",
+          "assay",
+          "source"
+        ],
+        "properties": {
+          "response_id": {
+            "type": "string",
+            "pattern": "^response_[a-z0-9_]+$"
+          },
+          "name": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9_]*[a-z0-9]$"
+          },
+          "display_name": {
+            "type": "string",
+            "minLength": 1
+          },
+          "role": {
+            "type": "string",
+            "enum": ["productivity", "CQA", "economics", "diagnostic", "derived", "kinetic", "purity", "process"]
+          },
+          "value_type": {
+            "type": "string",
+            "enum": ["measured", "derived", "predicted", "semi_quantitative"]
+          },
+          "goal": {
+            "type": "string",
+            "enum": ["maximize", "minimize", "target", "range", "upper_threshold", "lower_threshold", "diagnostic_only"]
+          },
+          "units": {
+            "type": "string"
+          },
+          "weight": {
+            "type": "number",
+            "minimum": 0
+          },
+          "threshold": {
+            "type": ["object", "null"]
+          },
+          "assay": {
+            "type": "object"
+          },
+          "source": {
+            "type": "string",
+            "enum": ["user_input", "imported_observation", "derived", "model_predicted", "tool_generated", "dashboard_state"]
+          }
+        }
+      }
+    }
+  }
+}

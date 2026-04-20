@@ -1,0 +1,29 @@
+{
+  "artifact_metadata": {
+    "artifact_hash": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+    "artifact_id": "artifact_study_bad_id",
+    "artifact_type": "study",
+    "generated_at": "2026-04-20T19:00:00Z",
+    "input_hash": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+    "method_version": "1.0.0",
+    "run_id": "run_20260420_190000_gate0",
+    "schema_version": "1.0.0",
+    "study_id": "minimal_doe",
+    "tool_name": "create_or_update_study",
+    "tool_version": "0.1.0",
+    "warnings": []
+  },
+  "study": {
+    "active_construct_id": null,
+    "active_design_id": null,
+    "active_fit_id": null,
+    "artifact_index": [],
+    "created_at": "2026-04-20T19:00:00Z",
+    "domain_template": "ivt_qbd",
+    "metadata": {},
+    "status": "active",
+    "study_id": "BadStudyID",
+    "title": "Invalid Study ID Fixture",
+    "updated_at": "2026-04-20T19:00:00Z"
+  }
+}

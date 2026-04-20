@@ -1,0 +1,158 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "factor_space.schema.json",
+  "title": "Factor Space Artifact",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["artifact_metadata", "factor_space"],
+  "properties": {
+    "artifact_metadata": {
+      "$ref": "artifact_metadata.schema.json"
+    },
+    "factor_space": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["factors", "constraints", "fixed_conditions", "normalization"],
+      "properties": {
+        "factors": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "factor_space.schema.json#/$defs/factor"
+          }
+        },
+        "constraints": {
+          "type": "array",
+          "items": {
+            "type": "object"
+          }
+        },
+        "fixed_conditions": {
+          "type": "array",
+          "items": {
+            "type": "object"
+          }
+        },
+        "normalization": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["internal_name_policy", "default_continuous_coding"],
+          "properties": {
+            "internal_name_policy": {
+              "type": "string",
+              "enum": ["lower_snake_case"]
+            },
+            "default_continuous_coding": {
+              "type": "string",
+              "enum": ["center_scale_to_minus_one_plus_one"]
+            }
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "factor": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "factor_id",
+        "name",
+        "display_name",
+        "kind",
+        "units",
+        "low",
+        "high",
+        "levels",
+        "default_value",
+        "fixed",
+        "transform",
+        "coding",
+        "role",
+        "description",
+        "source"
+      ],
+      "properties": {
+        "factor_id": {
+          "type": "string",
+          "pattern": "^factor_[a-z0-9_]+$"
+        },
+        "name": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]*[a-z0-9]$"
+        },
+        "display_name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "kind": {
+          "type": "string",
+          "enum": ["continuous", "categorical", "ordinal", "fixed"]
+        },
+        "units": {
+          "type": "string"
+        },
+        "low": {
+          "type": ["number", "null"]
+        },
+        "high": {
+          "type": ["number", "null"]
+        },
+        "levels": {
+          "type": ["array", "null"],
+          "items": {
+            "type": ["string", "number", "boolean"]
+          }
+        },
+        "default_value": {
+          "type": ["string", "number", "boolean", "null"]
+        },
+        "fixed": {
+          "type": "boolean"
+        },
+        "transform": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["name", "parameters"],
+          "properties": {
+            "name": {
+              "type": "string",
+              "enum": ["none", "center_scale", "log", "log10", "sqrt", "reciprocal", "user_defined_named_transform"]
+            },
+            "parameters": {
+              "type": "object"
+            }
+          }
+        },
+        "coding": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["method", "low_coded", "high_coded"],
+          "properties": {
+            "method": {
+              "type": "string",
+              "enum": ["center_scale", "dummy", "none"]
+            },
+            "low_coded": {
+              "type": ["number", "null"]
+            },
+            "high_coded": {
+              "type": ["number", "null"]
+            }
+          }
+        },
+        "role": {
+          "type": "string",
+          "enum": ["process_factor", "block", "batch", "construct_metadata", "environmental", "derived_factor"]
+        },
+        "description": {
+          "type": "string"
+        },
+        "source": {
+          "type": "string",
+          "enum": ["user_input", "imported_observation", "derived", "model_predicted", "tool_generated", "dashboard_state"]
+        }
+      }
+    }
+  }
+}

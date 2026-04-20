@@ -1,0 +1,15 @@
+{
+  "study": {
+    "active_construct_id": null,
+    "active_design_id": null,
+    "active_fit_id": null,
+    "artifact_index": [],
+    "created_at": "2026-04-20T19:00:00Z",
+    "domain_template": "ivt_qbd",
+    "metadata": {},
+    "status": "active",
+    "study_id": "missing_metadata",
+    "title": "Missing Metadata Fixture",
+    "updated_at": "2026-04-20T19:00:00Z"
+  }
+}

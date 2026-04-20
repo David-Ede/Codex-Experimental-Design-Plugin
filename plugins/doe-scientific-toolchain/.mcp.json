@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "doe-scientific-toolchain": {
+      "command": "doe-toolchain-mcp",
+      "args": [],
+      "startup_timeout_sec": 20,
+      "tool_timeout_sec": 120
+    }
+  },
+  "notes": "Distribution-oriented MCP entry. Gate 0 development uses .codex/config.toml.example from the repository root."
+}

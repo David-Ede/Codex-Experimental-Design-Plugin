@@ -1,0 +1,8 @@
+{
+  "audit": {},
+  "payload_metadata": {
+    "payload_id": "payload_invalid_shape"
+  },
+  "study": null,
+  "warnings": "this must be an array"
+}

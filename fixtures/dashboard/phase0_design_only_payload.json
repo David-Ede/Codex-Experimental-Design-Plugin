@@ -1,0 +1,182 @@
+{
+  "audit": {
+    "artifact_hashes": {
+      "dashboard_payload": "sha256:9999999999999999999999999999999999999999999999999999999999999999"
+    },
+    "generated_at": "2026-04-20T19:03:00Z",
+    "generated_by": "fixture",
+    "method_versions": {
+      "create_or_update_study": "1.0.0"
+    }
+  },
+  "constructs": [],
+  "dashboard_state": {
+    "matrix_filters": {},
+    "selected_factor_x": "mg_ntp_ratio",
+    "selected_factor_y": "ntp_concentration",
+    "selected_response": "mrna_yield",
+    "selected_scenario_ids": [],
+    "show_cogs_overlay": false,
+    "show_confidence_bands": true
+  },
+  "derived": {
+    "economics": null,
+    "effects": null,
+    "relative_yield": null,
+    "verification_plan": null
+  },
+  "designs": [
+    {
+      "design_id": "design_phase0_skeleton",
+      "design_type": "fixture_only",
+      "matrix": [
+        {
+          "mg_ntp_ratio": 0.8,
+          "ntp_concentration": 8,
+          "randomization_order": 1,
+          "run_id": "run_001",
+          "run_type": "model_building"
+        },
+        {
+          "mg_ntp_ratio": 1.6,
+          "ntp_concentration": 12,
+          "randomization_order": 2,
+          "run_id": "run_002",
+          "run_type": "model_building"
+        }
+      ],
+      "status": "fixture_only"
+    }
+  ],
+  "factor_space": {
+    "factors": [
+      {
+        "display_name": "Mg:NTP ratio",
+        "high": 1.6,
+        "kind": "continuous",
+        "low": 0.8,
+        "name": "mg_ntp_ratio",
+        "units": "ratio"
+      },
+      {
+        "display_name": "NTP concentration",
+        "high": 12,
+        "kind": "continuous",
+        "low": 8,
+        "name": "ntp_concentration",
+        "units": "mM"
+      }
+    ]
+  },
+  "models": [],
+  "observations": {
+    "endpoint": null,
+    "time_resolved": null
+  },
+  "payload_metadata": {
+    "generated_at": "2026-04-20T19:03:00Z",
+    "payload_hash": "sha256:9999999999999999999999999999999999999999999999999999999999999999",
+    "payload_id": "payload_phase0_design_only",
+    "run_id": "run_20260420_190300_gate0",
+    "schema_version": "1.0.0",
+    "source_artifacts": [
+      {
+        "artifact_hash": "sha256:3333333333333333333333333333333333333333333333333333333333333333",
+        "artifact_type": "factor_space",
+        "path": "fixtures/studies/minimal_doe/factor_space.json"
+      }
+    ],
+    "study_id": "minimal_doe"
+  },
+  "responses": [
+    {
+      "display_name": "mRNA yield",
+      "goal": "maximize",
+      "name": "mrna_yield",
+      "units": "g/L"
+    }
+  ],
+  "sections": {
+    "audit": {
+      "reason": null,
+      "required_inputs": [],
+      "source_artifacts": ["fixtures/studies/minimal_doe/factor_space.json"],
+      "status": "available"
+    },
+    "diagnostics": {
+      "reason": null,
+      "required_inputs": [],
+      "source_artifacts": ["fixtures/dashboard/phase0_design_only_payload.json"],
+      "status": "available"
+    },
+    "economics": {
+      "reason": "Cost efficiency was not calculated because direct component costs were not supplied.",
+      "required_inputs": ["component_costs"],
+      "source_artifacts": [],
+      "status": "unavailable_missing_input"
+    },
+    "effects": {
+      "reason": "Model fitting has not been run.",
+      "required_inputs": ["model_fit"],
+      "source_artifacts": [],
+      "status": "unavailable_not_run"
+    },
+    "experiment_matrix": {
+      "reason": null,
+      "required_inputs": [],
+      "source_artifacts": ["fixtures/dashboard/phase0_design_only_payload.json"],
+      "status": "available"
+    },
+    "recommendations": {
+      "reason": "Recommendations require a model fit.",
+      "required_inputs": ["model_fit"],
+      "source_artifacts": [],
+      "status": "unavailable_not_run"
+    },
+    "relative_yield": {
+      "reason": "Construct and theoretical yield inputs are missing.",
+      "required_inputs": ["constructs", "theoretical_yield"],
+      "source_artifacts": [],
+      "status": "unavailable_missing_input"
+    },
+    "time_courses": {
+      "reason": "No time-resolved observations have been imported.",
+      "required_inputs": ["time_resolved_observations"],
+      "source_artifacts": [],
+      "status": "unavailable_missing_input"
+    },
+    "verification": {
+      "reason": "Verification planning has not been run.",
+      "required_inputs": ["model_fit"],
+      "source_artifacts": [],
+      "status": "unavailable_not_run"
+    },
+    "warnings": {
+      "reason": null,
+      "required_inputs": [],
+      "source_artifacts": [],
+      "status": "available"
+    }
+  },
+  "study": {
+    "active_construct_id": null,
+    "active_design_id": "design_phase0_skeleton",
+    "active_fit_id": null,
+    "domain_template": "ivt_qbd",
+    "status": "active",
+    "study_id": "minimal_doe",
+    "title": "Minimal DOE Gate 0 Fixture"
+  },
+  "version": "1.0.0",
+  "warnings": [
+    {
+      "code": "payload_section_unavailable",
+      "details": {
+        "gate": "Gate 0"
+      },
+      "field": "sections.effects",
+      "message": "Scientific model sections are unavailable in Gate 0 fixtures.",
+      "severity": "info"
+    }
+  ]
+}

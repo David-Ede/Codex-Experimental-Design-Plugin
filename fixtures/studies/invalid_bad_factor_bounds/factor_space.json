@@ -1,0 +1,50 @@
+{
+  "artifact_metadata": {
+    "artifact_hash": "sha256:3333333333333333333333333333333333333333333333333333333333333333",
+    "artifact_id": "artifact_factor_space_bad_bounds",
+    "artifact_type": "factor_space",
+    "generated_at": "2026-04-20T19:01:00Z",
+    "input_hash": "sha256:4444444444444444444444444444444444444444444444444444444444444444",
+    "method_version": "1.0.0",
+    "run_id": "run_20260420_190100_gate0",
+    "schema_version": "1.0.0",
+    "study_id": "minimal_doe",
+    "tool_name": "validate_factor_space",
+    "tool_version": "0.1.0",
+    "warnings": []
+  },
+  "factor_space": {
+    "constraints": [],
+    "factors": [
+      {
+        "coding": {
+          "high_coded": 1,
+          "low_coded": -1,
+          "method": "center_scale"
+        },
+        "default_value": 1.2,
+        "description": "Invalid bounds fixture.",
+        "display_name": "Mg:NTP ratio",
+        "factor_id": "factor_mg_ntp_ratio",
+        "fixed": false,
+        "high": 0.8,
+        "kind": "continuous",
+        "levels": null,
+        "low": 1.6,
+        "name": "mg_ntp_ratio",
+        "role": "process_factor",
+        "source": "user_input",
+        "transform": {
+          "name": "none",
+          "parameters": {}
+        },
+        "units": "ratio"
+      }
+    ],
+    "fixed_conditions": [],
+    "normalization": {
+      "default_continuous_coding": "center_scale_to_minus_one_plus_one",
+      "internal_name_policy": "lower_snake_case"
+    }
+  }
+}

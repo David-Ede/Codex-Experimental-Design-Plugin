@@ -1,0 +1,42 @@
+{
+  "audit": {
+    "artifact_hashes": {},
+    "generated_at": "2026-04-20T19:00:00Z",
+    "generated_by": "fixture",
+    "method_versions": {}
+  },
+  "constructs": [],
+  "dashboard_state": {},
+  "derived": {},
+  "designs": [],
+  "factor_space": null,
+  "models": [],
+  "observations": {},
+  "payload_metadata": {
+    "generated_at": "2026-04-20T19:00:00Z",
+    "payload_hash": "sha256:8888888888888888888888888888888888888888888888888888888888888888",
+    "payload_id": "payload_empty_state",
+    "run_id": "run_20260420_190000_gate0",
+    "schema_version": "1.0.0",
+    "source_artifacts": [],
+    "study_id": null
+  },
+  "responses": [],
+  "sections": {
+    "audit": {
+      "reason": "No study payload is available.",
+      "required_inputs": ["study"],
+      "source_artifacts": [],
+      "status": "unavailable_missing_input"
+    },
+    "diagnostics": {
+      "reason": "No study payload is available.",
+      "required_inputs": ["study"],
+      "source_artifacts": [],
+      "status": "unavailable_missing_input"
+    }
+  },
+  "study": null,
+  "version": "1.0.0",
+  "warnings": []
+}

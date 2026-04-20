@@ -1,0 +1,20 @@
+{
+  "name": "doe-scientific-toolchain-marketplace",
+  "interface": {
+    "displayName": "DOE Scientific Toolchain"
+  },
+  "plugins": [
+    {
+      "name": "doe-scientific-toolchain",
+      "source": {
+        "source": "local",
+        "path": "./plugins/doe-scientific-toolchain"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Data"
+    }
+  ]
+}

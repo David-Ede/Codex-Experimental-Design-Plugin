@@ -1,0 +1,6 @@
+[mcp_servers.doe-scientific-toolchain]
+command = "uv"
+args = ["--directory", "mcp-server", "run", "python", "-m", "doe_toolchain.server"]
+cwd = "."
+startup_timeout_sec = 20
+tool_timeout_sec = 120

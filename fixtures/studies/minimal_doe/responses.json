@@ -1,0 +1,58 @@
+{
+  "artifact_metadata": {
+    "artifact_hash": "sha256:5555555555555555555555555555555555555555555555555555555555555555",
+    "artifact_id": "artifact_responses_minimal",
+    "artifact_type": "responses",
+    "generated_at": "2026-04-20T19:02:00Z",
+    "input_hash": "sha256:6666666666666666666666666666666666666666666666666666666666666666",
+    "method_version": "1.0.0",
+    "run_id": "run_20260420_190200_gate0",
+    "schema_version": "1.0.0",
+    "study_id": "minimal_doe",
+    "tool_name": "validate_factor_space",
+    "tool_version": "0.1.0",
+    "warnings": []
+  },
+  "responses": [
+    {
+      "assay": {
+        "name": "synthetic_assay",
+        "scale": null,
+        "semi_quantitative": false
+      },
+      "display_name": "mRNA yield",
+      "goal": "maximize",
+      "name": "mrna_yield",
+      "response_id": "response_mrna_yield",
+      "role": "productivity",
+      "source": "user_input",
+      "threshold": null,
+      "units": "g/L",
+      "value_type": "measured",
+      "weight": 1
+    },
+    {
+      "assay": {
+        "name": "synthetic_assay",
+        "scale": "0-5",
+        "semi_quantitative": true
+      },
+      "display_name": "dsRNA score",
+      "goal": "upper_threshold",
+      "name": "dsrna_score",
+      "response_id": "response_dsrna_score",
+      "role": "CQA",
+      "source": "user_input",
+      "threshold": {
+        "description": "Synthetic quality threshold.",
+        "hard_constraint": true,
+        "operator": "<",
+        "unit": "score",
+        "value": 3
+      },
+      "units": "score",
+      "value_type": "measured",
+      "weight": 1
+    }
+  ]
+}

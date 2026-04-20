@@ -1,0 +1,14 @@
+{
+  "name": "doe-scientific-toolchain",
+  "version": "0.1.0",
+  "description": "Local DOE and IVT/QbD scientific toolchain for Codex with MCP-backed calculations and dashboard review.",
+  "skills": "./skills/",
+  "mcpServers": "./.mcp.json",
+  "interface": {
+    "displayName": "DOE Scientific Toolchain",
+    "shortDescription": "Design DOE studies, fit response models, and review scientific dashboards.",
+    "developerName": "DOE Toolchain Maintainers",
+    "category": "Data",
+    "capabilities": ["Read", "Write"]
+  }
+}
