@@ -11,8 +11,13 @@ import importlib.metadata
 import json
 import os
 import re
+import shutil
+import subprocess
 import sys
 import time
+import urllib.error
+import urllib.parse
+import urllib.request
 import uuid
 from datetime import UTC, datetime
 from pathlib import Path
@@ -2013,6 +2018,110 @@ def _responses_for_payload(study_id: str) -> list[dict[str, Any]]:
     return list(_read_json(path).get("responses", []))
 
 
+def _dashboard_app_dir() -> Path:
+    return (REPO_ROOT / "apps" / "dashboard").resolve()
+
+
+def _dashboard_payload_path(study_id: str) -> Path:
+    return _study_dir(study_id) / "dashboard_payload.json"
+
+
+def _dashboard_http_host(host: str) -> str:
+    return f"[{host}]" if ":" in host and not host.startswith("[") else host
+
+
+def _validated_dashboard_host(value: Any) -> str | None:
+    if not isinstance(value, str):
+        return None
+    host = value.strip().lower()
+    return host if host in {"127.0.0.1", "localhost", "::1"} else None
+
+
+def _validated_dashboard_port(value: Any) -> int | None:
+    if isinstance(value, bool):
+        return None
+    if not isinstance(value, int):
+        return None
+    return value if 1 <= value <= 65535 else None
+
+
+def _dashboard_payload_fetch_path(payload_path: Path) -> str:
+    return f"/@fs/{payload_path.resolve().as_posix()}"
+
+
+def _dashboard_route(study_id: str, value: Any) -> str:
+    default = f"/studies/{study_id}"
+    if not isinstance(value, str):
+        return default
+    route = value.strip()
+    if not route.startswith("/") or "://" in route or "?" in route or "#" in route or ".." in route:
+        return default
+    return route
+
+
+def _dashboard_preview_url(route: str, host: str, port: int, payload_path: Path) -> str:
+    query = urllib.parse.urlencode({"payloadUrl": _dashboard_payload_fetch_path(payload_path)})
+    return f"http://{_dashboard_http_host(host)}:{port}{route}?{query}"
+
+
+def _dashboard_static_file_url(study_id: str, payload_path: Path, index_path: Path) -> str:
+    query = urllib.parse.urlencode({"payloadUrl": payload_path.resolve().as_uri(), "studyId": study_id})
+    return f"{index_path.resolve().as_uri()}?{query}"
+
+
+def _probe_dashboard_server(host: str, port: int) -> bool:
+    url = f"http://{_dashboard_http_host(host)}:{port}/"
+    try:
+        with urllib.request.urlopen(url, timeout=1.0) as response:
+            return response.status < 500
+    except (OSError, urllib.error.URLError):
+        return False
+
+
+def _start_dashboard_dev_server(host: str, port: int, timeout_sec: float) -> tuple[str, int | None, str | None]:
+    app_dir = _dashboard_app_dir()
+    package_runner = shutil.which("pnpm")
+    command_prefix = [package_runner, "dev"] if package_runner else None
+    if command_prefix is None:
+        package_runner = shutil.which("npm")
+        command_prefix = [package_runner, "run", "dev"] if package_runner else None
+    if command_prefix is None:
+        return "failed", None, "Neither pnpm nor npm was found on PATH."
+
+    stdout_path = app_dir / "vite.stdout.log"
+    stderr_path = app_dir / "vite.stderr.log"
+    command = [
+        *command_prefix,
+        "--",
+        "--host",
+        host,
+        "--port",
+        str(port),
+        "--strictPort",
+    ]
+    creationflags = getattr(subprocess, "CREATE_NEW_PROCESS_GROUP", 0)
+    with stdout_path.open("ab") as stdout, stderr_path.open("ab") as stderr:
+        process = subprocess.Popen(
+            command,
+            cwd=app_dir,
+            stdin=subprocess.DEVNULL,
+            stdout=stdout,
+            stderr=stderr,
+            creationflags=creationflags,
+        )
+
+    deadline = time.perf_counter() + timeout_sec
+    while time.perf_counter() < deadline:
+        if process.poll() is not None:
+            return "failed", process.pid, f"dashboard dev server exited with code {process.returncode}."
+        if _probe_dashboard_server(host, port):
+            return "started", process.pid, None
+        time.sleep(0.25)
+
+    process.terminate()
+    return "failed", process.pid, f"dashboard dev server did not respond within {timeout_sec:g} seconds."
+
+
 @_register
 def generate_dashboard_payload(
     study_id: str | None = None,
@@ -2215,6 +2324,224 @@ def generate_dashboard_payload(
         artifact_paths=artifact_paths,
         artifact_hashes=artifact_hashes,
         structured_content={"payload_path": artifact_paths[0], "workbench_available": workbench_available},
+    )
+
+
+@_register
+def launch_dashboard_preview(
+    study_id: str | None = None,
+    run_id: str | None = None,
+    request: dict[str, Any] | None = None,
+    options: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    """Return or start a local dashboard preview for a generated study payload."""
+
+    started = time.perf_counter()
+    tool_name = "launch_dashboard_preview"
+    request = request or {}
+    options = options or {}
+    run_id = run_id or _run_id()
+    invalid = _invalid_study_envelope(study_id, run_id)
+    if invalid:
+        return invalid
+    assert study_id is not None
+    input_hash = _canonical_hash(
+        {"study_id": study_id, "run_id": run_id, "request": request, "options": options}
+    )
+
+    def finish(
+        *,
+        status: str,
+        summary: str,
+        structured_content: dict[str, Any],
+        warnings: list[dict[str, Any]] | None = None,
+        errors: list[dict[str, Any]] | None = None,
+    ) -> dict[str, Any]:
+        envelope = _envelope(
+            study_id=study_id,
+            run_id=run_id,
+            status=status,
+            summary=summary,
+            warnings=warnings or [],
+            errors=errors or [],
+            structured_content=structured_content,
+        )
+        _append_audit(
+            study_id=study_id,
+            run_id=run_id,
+            tool_name=tool_name,
+            status=status,
+            input_hash=input_hash,
+            output_hash=_canonical_hash(envelope),
+            duration_ms=int((time.perf_counter() - started) * 1000),
+            artifact_paths=[],
+            warnings=warnings or [],
+            errors=errors or [],
+            seed=options.get("seed") if isinstance(options.get("seed"), int) else None,
+        )
+        return envelope
+
+    payload_path = _dashboard_payload_path(study_id)
+    payload_rel = _relative_to_workspace(payload_path)
+    base_structured = {
+        "payload_path": payload_rel,
+        "server_status": "failed",
+        "url": None,
+    }
+    if not payload_path.exists():
+        error = _error(
+            "dashboard_payload_not_found",
+            "dashboard_payload.json must exist before launching the dashboard preview.",
+            "study_id",
+            {"payload_path": payload_rel},
+        )
+        return finish(
+            status="failed_validation",
+            summary=f"Dashboard payload was not found for {study_id}.",
+            structured_content={
+                **base_structured,
+                "instructions": "Run generate_dashboard_payload before launching the dashboard preview.",
+            },
+            errors=[error],
+        )
+
+    host = _validated_dashboard_host(request.get("host", "127.0.0.1"))
+    if host is None:
+        error = _error(
+            "invalid_host",
+            "Dashboard preview host must be localhost, 127.0.0.1, or ::1.",
+            "request.host",
+            {"host": request.get("host")},
+        )
+        return finish(
+            status="failed_validation",
+            summary="Dashboard preview host failed validation.",
+            structured_content=base_structured,
+            errors=[error],
+        )
+
+    port = _validated_dashboard_port(request.get("port", 5173))
+    if port is None:
+        error = _error(
+            "invalid_port",
+            "Dashboard preview port must be an integer from 1 to 65535.",
+            "request.port",
+            {"port": request.get("port")},
+        )
+        return finish(
+            status="failed_validation",
+            summary="Dashboard preview port failed validation.",
+            structured_content=base_structured,
+            errors=[error],
+        )
+
+    mode = request.get("mode", "return_url_only")
+    allowed_modes = {"return_url_only", "check_existing_server", "start_dev_server", "static_file"}
+    if not isinstance(mode, str) or mode not in allowed_modes:
+        error = _error(
+            "invalid_mode",
+            "Dashboard preview mode must be return_url_only, check_existing_server, start_dev_server, or static_file.",
+            "request.mode",
+            {"mode": mode},
+        )
+        return finish(
+            status="failed_validation",
+            summary="Dashboard preview mode failed validation.",
+            structured_content=base_structured,
+            errors=[error],
+        )
+
+    app_dir = _dashboard_app_dir()
+    if not (app_dir / "package.json").exists():
+        error = _error(
+            "dashboard_app_not_found",
+            "Dashboard app package.json was not found.",
+            "apps/dashboard",
+            {"dashboard_app_dir": str(app_dir)},
+        )
+        return finish(
+            status="failed_runtime",
+            summary="Dashboard app was not found.",
+            structured_content=base_structured,
+            errors=[error],
+        )
+
+    route = _dashboard_route(study_id, request.get("route"))
+    url = _dashboard_preview_url(route, host, port, payload_path)
+    payload_url = _dashboard_payload_fetch_path(payload_path)
+    structured_content: dict[str, Any] = {
+        "url": url,
+        "server_status": "not_started",
+        "payload_path": payload_rel,
+        "payload_url": payload_url,
+        "instructions": "Open the URL after the dashboard dev server is running.",
+    }
+
+    if mode == "static_file":
+        index_path = app_dir / "dist" / "index.html"
+        if not index_path.exists():
+            error = _error(
+                "dashboard_app_not_found",
+                "Dashboard static build was not found. Run the dashboard build before static_file mode.",
+                "apps/dashboard/dist/index.html",
+                {"dashboard_app_dir": str(app_dir)},
+            )
+            return finish(
+                status="failed_runtime",
+                summary="Dashboard static build was not found.",
+                structured_content=structured_content,
+                errors=[error],
+            )
+        structured_content["url"] = _dashboard_static_file_url(study_id, payload_path, index_path)
+        structured_content["server_status"] = "static_file_ready"
+        structured_content["instructions"] = "Open the static dashboard file URL."
+        return finish(
+            status="success",
+            summary=f"Dashboard static preview URL is {structured_content['url']}.",
+            structured_content=structured_content,
+        )
+
+    if _probe_dashboard_server(host, port):
+        structured_content["server_status"] = "already_running"
+        structured_content["instructions"] = "Open the returned dashboard preview URL."
+        return finish(
+            status="success",
+            summary=f"Dashboard preview URL is {url}.",
+            structured_content=structured_content,
+        )
+
+    if mode in {"return_url_only", "check_existing_server"}:
+        return finish(
+            status="success",
+            summary=f"Dashboard preview URL is {url}.",
+            structured_content=structured_content,
+        )
+
+    timeout_raw = request.get("startup_timeout_sec", 10)
+    timeout_sec = float(timeout_raw) if isinstance(timeout_raw, (int, float)) and timeout_raw > 0 else 10.0
+    server_status, pid, error_message = _start_dashboard_dev_server(host, port, timeout_sec)
+    structured_content["server_status"] = server_status
+    if pid is not None:
+        structured_content["pid"] = pid
+    if error_message is not None:
+        error = _error(
+            "dev_server_start_failed",
+            error_message,
+            "request.mode",
+            {"mode": mode, "host": host, "port": port},
+        )
+        return finish(
+            status="failed_runtime",
+            summary="Dashboard dev server failed to start.",
+            structured_content=structured_content,
+            errors=[error],
+        )
+
+    structured_content["instructions"] = "Open the returned dashboard preview URL."
+    return finish(
+        status="success",
+        summary=f"Dashboard preview URL is {url}.",
+        structured_content=structured_content,
     )
 
 

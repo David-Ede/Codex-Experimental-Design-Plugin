@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import React from "react";
 import { renderToString } from "react-dom/server";
 import { WorkbenchView } from "./App";
-import { fixturePayloads, validateDashboardPayload } from "./payload";
+import { fixturePayloads, getPayloadUrlFromLocation, getStudyIdFromPathname, validateDashboardPayload } from "./payload";
 
 describe("dashboard payload validation", () => {
   it("accepts the phase 0 design-only fixture", () => {
@@ -43,6 +43,16 @@ describe("dashboard payload validation", () => {
       expect(result.data.workbench?.candidate_design_sets[0].candidates).toHaveLength(3);
       expect(result.data.workbench?.contextual_ai_panels[0].source_refs.length).toBeGreaterThan(0);
     }
+  });
+
+  it("parses study routes and encoded payload URLs for launched previews", () => {
+    const payloadUrl = "/@fs/C:/Users/David/Desktop/Codex Plugins/DOE/outputs/studies/dashboard_launch/dashboard_payload.json";
+    const search = `?payloadUrl=${encodeURIComponent(payloadUrl)}`;
+
+    expect(getStudyIdFromPathname("/studies/dashboard_launch")).toBe("dashboard_launch");
+    expect(getStudyIdFromPathname("/studies/dashboard_launch/")).toBe("dashboard_launch");
+    expect(getStudyIdFromPathname("/not-studies/dashboard_launch")).toBeNull();
+    expect(getPayloadUrlFromLocation(search)).toBe(payloadUrl);
   });
 
   it("renders the workbench payload without recomputing scientific state", () => {

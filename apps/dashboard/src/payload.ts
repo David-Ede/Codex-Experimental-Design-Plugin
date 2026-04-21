@@ -411,3 +411,8 @@ export function getPayloadUrlFromLocation(search: string): string | null {
   const requested = new URLSearchParams(search).get("payloadUrl");
   return requested && requested.length > 0 ? requested : null;
 }
+
+export function getStudyIdFromPathname(pathname: string): string | null {
+  const match = /^\/studies\/([a-z][a-z0-9_]*[a-z0-9])\/?$/.exec(pathname);
+  return match ? match[1] : null;
+}
