@@ -16,13 +16,14 @@ Use this skill when creating, validating, or reviewing DOE and IVT/QbD study art
 
 ## Required Workflow
 
-1. Create or select a study with `create_or_update_study`.
-2. Validate factors and responses before any design work.
-3. Prefer study-object-first workbench flows over chat-only inspection.
-4. Generate candidate designs and comparisons before committing a run plan when the user is choosing a DOE strategy.
+1. For common first-pass DOE setup where the user wants a committed run matrix, prefer `create_candidate_run_plan` with study metadata, factors, responses, candidate families, recommendation mode, and run budget in one request.
+2. Use the explicit multi-step workbench tools only when the user is comparing alternatives interactively: `create_or_update_study`, `generate_candidate_designs`, `compare_candidate_designs`, `commit_run_plan`, then `generate_dashboard_payload`.
+3. Skip placeholder-only tools such as `validate_factor_space` when they are registered as Gate 0 placeholders and cannot persist validation artifacts.
+4. Prefer study-object-first workbench flows over chat-only inspection.
 5. Generate or refresh `dashboard_payload.json` before launching the dashboard or workbench preview.
 6. Surface warnings, unavailable states, and validation failures directly in user-facing summaries.
 7. Cite persisted artifact paths as the source of truth.
+8. Use compact artifact checks such as `scripts/validate_artifacts.ps1` and `scripts/summarize_study.py` instead of reading full dashboard payloads unless detailed inspection is required.
 
 ## Guardrails
 
