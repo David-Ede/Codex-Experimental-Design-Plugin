@@ -12,6 +12,7 @@ from jsonschema import Draft202012Validator
 from doe_toolchain.server import (
     commit_run_plan,
     compare_candidate_designs,
+    create_candidate_run_plan,
     create_or_update_study,
     create_study_snapshot,
     diff_study_snapshots,
@@ -53,6 +54,46 @@ def _assert_valid(document: dict[str, Any], schema_name: str, store: dict[str, A
     validator: Draft202012Validator = _validator(schema_name, store)
     errors = list(validator.iter_errors(document))
     assert errors == []
+
+
+def test_create_candidate_run_plan_one_call_persists_committed_artifacts(workspace_root: Path) -> None:
+    study_id = "workbench_one_call"
+    store = _schema_store()
+
+    envelope = create_candidate_run_plan(
+        study_id=study_id,
+        run_id="run_20260421_workbench_one_call",
+        request={
+            "title": "Workbench One Call",
+            "domain_template": "ivt_qbd",
+            "run_plan_id": "run_plan_one_call",
+            **_workbench_request(),
+        },
+    )
+
+    assert envelope["status"] == "success_with_warnings"
+    structured = envelope["structured_content"]
+    assert structured["candidate_set_id"]
+    assert structured["comparison_id"]
+    assert structured["run_plan_id"] == "run_plan_one_call"
+    assert structured["dashboard_payload_path"] == f"outputs/studies/{study_id}/dashboard_payload.json"
+    assert [step["tool_name"] for step in structured["steps"]] == [
+        "create_or_update_study",
+        "generate_candidate_designs",
+        "compare_candidate_designs",
+        "commit_run_plan",
+        "generate_dashboard_payload",
+    ]
+
+    run_plan_path = workspace_root / "outputs" / "studies" / study_id / "run_plans" / "run_plan_one_call" / "run_plan.json"
+    payload_path = workspace_root / "outputs" / "studies" / study_id / "dashboard_payload.json"
+    _assert_valid(json.loads(run_plan_path.read_text(encoding="utf-8")), "run_plan_commit.schema.json", store)
+    _assert_valid(json.loads(payload_path.read_text(encoding="utf-8")), "dashboard_payload.schema.json", store)
+
+    audit_log = (workspace_root / "outputs" / "studies" / study_id / "audit_log.jsonl").read_text(encoding="utf-8")
+    assert '"tool_name": "create_candidate_run_plan"' in audit_log
+    assert '"tool_name": "rank_candidate_designs"' not in audit_log
+    assert '"tool_name": "launch_dashboard_preview"' not in audit_log
 
 
 def test_workbench_artifact_flow_persists_schema_valid_artifacts(workspace_root: Path) -> None:

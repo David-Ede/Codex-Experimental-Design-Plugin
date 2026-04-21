@@ -13,6 +13,7 @@ import {
   fixturePayloads,
   getFixtureNameFromLocation,
   getPayloadUrlFromLocation,
+  getStudyIdFromPathname,
   validateDashboardPayload
 } from "./payload";
 
@@ -120,6 +121,7 @@ type StatusKind = Availability["status"] | CandidateStatus | "current";
 export default function App() {
   const fixtureName = useMemo(() => getFixtureNameFromLocation(window.location.search), []);
   const payloadUrl = useMemo(() => getPayloadUrlFromLocation(window.location.search), []);
+  const routeStudyId = useMemo(() => getStudyIdFromPathname(window.location.pathname), []);
   const [rawPayload, setRawPayload] = useState<unknown | null>(
     payloadUrl ? null : fixturePayloads[fixtureName]
   );
@@ -129,7 +131,7 @@ export default function App() {
     [rawPayload]
   );
   const [activeTab, setActiveTab] = useState<TabId>("overview");
-  const sourceLabel = payloadUrl ?? `fixture:${fixtureName}`;
+  const sourceLabel = payloadUrl ? `${routeStudyId ?? "payload"}:${payloadUrl}` : `fixture:${fixtureName}`;
 
   useEffect(() => {
     if (!payloadUrl) {

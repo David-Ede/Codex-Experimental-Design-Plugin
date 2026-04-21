@@ -1,0 +1,174 @@
+{
+  "title": "AAV transient transfection optimization DOE",
+  "domain_template": "aav_transient_transfection",
+  "status": "active",
+  "active_construct_id": "aav_construct_tbd",
+  "metadata": {
+    "owner": "process_development",
+    "objective": "Optimize transient transfection operating space for AAV productivity and quality.",
+    "assumptions": [
+      "Suspension producer-cell transient transfection workflow.",
+      "AAV serotype, transfer construct, culture scale, media platform, harvest timing, and analytical methods are fixed for this first-pass DOE.",
+      "No observed endpoint data supplied yet; model fitting remains unavailable until results are imported."
+    ],
+    "biosafety_note": "Design artifact only; not an experimentally verified production protocol."
+  },
+  "recommendation_mode": "fit_curvature",
+  "max_runs": 20,
+  "strict_max_runs": false,
+  "candidate_families": [
+    "d_optimal",
+    "box_behnken",
+    "fractional_factorial",
+    "full_factorial"
+  ],
+  "factors": [
+    {
+      "name": "cell_density_at_transfection",
+      "display_name": "Cell density at transfection",
+      "kind": "continuous",
+      "units": "10^6 viable cells/mL",
+      "low": 1.0,
+      "high": 3.0,
+      "description": "Viable cell density at the transfection event."
+    },
+    {
+      "name": "dna_load_per_million_cells",
+      "display_name": "DNA load per million cells",
+      "kind": "continuous",
+      "units": "ug/10^6 cells",
+      "low": 0.6,
+      "high": 2.0,
+      "description": "Total plasmid DNA mass normalized to viable cell count."
+    },
+    {
+      "name": "transfection_reagent_to_dna_ratio",
+      "display_name": "Transfection reagent:DNA ratio",
+      "kind": "continuous",
+      "units": "mass_ratio",
+      "low": 1.5,
+      "high": 4.0,
+      "description": "Mass ratio of transfection reagent to total plasmid DNA."
+    },
+    {
+      "name": "transfer_plasmid_fraction",
+      "display_name": "Transfer plasmid fraction",
+      "kind": "continuous",
+      "units": "fraction_total_dna",
+      "low": 0.25,
+      "high": 0.45,
+      "description": "Transfer-vector plasmid fraction of total plasmid DNA while helper and rep/cap balance remains fixed by the platform recipe."
+    }
+  ],
+  "responses": [
+    {
+      "name": "vg_titer",
+      "display_name": "Vector genome titer",
+      "role": "productivity",
+      "goal": "maximize",
+      "units": "vg/mL",
+      "weight": 0.4,
+      "assay": {
+        "name": "ddPCR vector genome titer",
+        "scale": null,
+        "semi_quantitative": false
+      }
+    },
+    {
+      "name": "infectious_titer",
+      "display_name": "Infectious titer",
+      "role": "CQA",
+      "goal": "maximize",
+      "units": "TU/mL",
+      "weight": 0.25,
+      "assay": {
+        "name": "infectivity assay",
+        "scale": null,
+        "semi_quantitative": false
+      }
+    },
+    {
+      "name": "full_capsid_fraction",
+      "display_name": "Full capsid fraction",
+      "role": "CQA",
+      "goal": "maximize",
+      "units": "%",
+      "weight": 0.2,
+      "assay": {
+        "name": "AUC or orthogonal capsid-content assay",
+        "scale": null,
+        "semi_quantitative": false
+      }
+    },
+    {
+      "name": "cell_viability_harvest",
+      "display_name": "Cell viability at harvest",
+      "role": "process",
+      "goal": "lower_threshold",
+      "units": "%",
+      "weight": 0.1,
+      "threshold": {
+        "operator": ">",
+        "value": 70,
+        "unit": "%",
+        "hard_constraint": true,
+        "description": "Maintain harvest viability at or above the platform floor."
+      },
+      "assay": {
+        "name": "viability counter",
+        "scale": null,
+        "semi_quantitative": false
+      }
+    },
+    {
+      "name": "aggregate_impurity",
+      "display_name": "Aggregate impurity",
+      "role": "purity",
+      "goal": "upper_threshold",
+      "units": "%",
+      "weight": 0.05,
+      "threshold": {
+        "operator": "<",
+        "value": 5,
+        "unit": "%",
+        "hard_constraint": false,
+        "description": "Limit aggregate or high-molecular-weight impurity signal."
+      },
+      "assay": {
+        "name": "SEC or equivalent purity method",
+        "scale": null,
+        "semi_quantitative": false
+      }
+    }
+  ],
+  "constraints": [
+    {
+      "name": "fixed_platform_recipe",
+      "description": "Serotype/capsid, cell line, media platform, culture scale, harvest window, and helper/rep-cap balance are fixed for this first DOE."
+    },
+    {
+      "name": "plasmid_fraction_context",
+      "description": "transfer_plasmid_fraction varies within a platform recipe; other plasmid fractions should be adjusted by the executing scientist to preserve total DNA mass."
+    }
+  ],
+  "fixed_conditions": [
+    {
+      "name": "serotype",
+      "value": "TBD fixed per campaign"
+    },
+    {
+      "name": "producer_cell_line",
+      "value": "TBD fixed platform cell line"
+    },
+    {
+      "name": "culture_scale",
+      "value": "TBD fixed screening scale"
+    },
+    {
+      "name": "harvest_window",
+      "value": "TBD fixed harvest timing"
+    }
+  ],
+  "decision_notes": "Select the recommended design unless the user overrides candidate_design_id. The default objective favors first-pass curvature learning within a 20-run preferred budget.",
+  "generate_dashboard_payload": true
+}
