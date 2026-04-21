@@ -1,0 +1,67 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "contextual_ai_panel.schema.json",
+  "title": "Contextual AI Panel",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "panel_id",
+    "object_type",
+    "object_id",
+    "title",
+    "summary",
+    "best_for",
+    "tradeoffs",
+    "watch_out_for",
+    "source_refs"
+  ],
+  "properties": {
+    "panel_id": {
+      "type": "string",
+      "pattern": "^ai_panel_[a-z0-9_]+$"
+    },
+    "object_type": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_]*[a-z0-9]$"
+    },
+    "object_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "title": {
+      "type": "string",
+      "minLength": 1
+    },
+    "summary": {
+      "type": "string",
+      "minLength": 1
+    },
+    "best_for": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "tradeoffs": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "watch_out_for": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "source_refs": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    }
+  }
+}
+

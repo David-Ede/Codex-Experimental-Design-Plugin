@@ -1,0 +1,56 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "study_snapshot.schema.json",
+  "title": "Study Snapshot",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "snapshot_id",
+    "label",
+    "created_at",
+    "study_state_hash",
+    "setup_hash",
+    "active_candidate_set_id",
+    "active_comparison_id",
+    "committed_run_plan_id",
+    "notes"
+  ],
+  "properties": {
+    "snapshot_id": {
+      "type": "string",
+      "pattern": "^snapshot_[a-z0-9_]+$"
+    },
+    "label": {
+      "type": "string",
+      "minLength": 1
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "study_state_hash": {
+      "type": "string",
+      "pattern": "^sha256:[a-f0-9]{64}$"
+    },
+    "setup_hash": {
+      "type": "string",
+      "pattern": "^sha256:[a-f0-9]{64}$"
+    },
+    "active_candidate_set_id": {
+      "type": ["string", "null"],
+      "pattern": "^candidate_set_[a-z0-9_]+$"
+    },
+    "active_comparison_id": {
+      "type": ["string", "null"],
+      "pattern": "^comparison_[a-z0-9_]+$"
+    },
+    "committed_run_plan_id": {
+      "type": ["string", "null"],
+      "pattern": "^run_plan_[a-z0-9_]+$"
+    },
+    "notes": {
+      "type": ["string", "null"]
+    }
+  }
+}
+

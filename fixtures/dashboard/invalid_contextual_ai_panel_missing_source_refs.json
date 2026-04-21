@@ -1,0 +1,11 @@
+{
+  "panel_id": "ai_panel_invalid_missing_refs",
+  "object_type": "candidate_design",
+  "object_id": "candidate_dopt_16",
+  "title": "Why this design?",
+  "summary": "This invalid fixture intentionally omits source refs.",
+  "best_for": ["Testing"],
+  "tradeoffs": [],
+  "watch_out_for": []
+}
+

@@ -1,0 +1,94 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "candidate_design_set.schema.json",
+  "title": "Candidate Design Set",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "candidate_set_id",
+    "study_id",
+    "source_snapshot_id",
+    "recommendation_mode",
+    "generated_at",
+    "generator_tool",
+    "input_hash",
+    "candidates",
+    "ranking_summary",
+    "warnings"
+  ],
+  "properties": {
+    "candidate_set_id": {
+      "type": "string",
+      "pattern": "^candidate_set_[a-z0-9_]+$"
+    },
+    "study_id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_]*[a-z0-9]$"
+    },
+    "source_snapshot_id": {
+      "type": ["string", "null"],
+      "pattern": "^snapshot_[a-z0-9_]+$"
+    },
+    "recommendation_mode": {
+      "type": "string",
+      "enum": [
+        "minimize_runs",
+        "screen_important_factors",
+        "estimate_interactions",
+        "fit_curvature",
+        "optimize_response",
+        "respect_material_time_constraints",
+        "prepare_scale_up_robustness",
+        "custom_weighted_objective"
+      ]
+    },
+    "generated_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "generator_tool": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_]*[a-z0-9]$"
+    },
+    "input_hash": {
+      "type": "string",
+      "pattern": "^sha256:[a-f0-9]{64}$"
+    },
+    "candidates": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "candidate_design.schema.json"
+      }
+    },
+    "ranking_summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["preferred_candidate_design_id", "ranking_basis", "weights"],
+      "properties": {
+        "preferred_candidate_design_id": {
+          "type": ["string", "null"],
+          "pattern": "^candidate_[a-z0-9_]+$"
+        },
+        "ranking_basis": {
+          "type": "string",
+          "minLength": 1
+        },
+        "weights": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "number",
+            "minimum": 0
+          }
+        }
+      }
+    },
+    "warnings": {
+      "type": "array",
+      "items": {
+        "$ref": "warning.schema.json"
+      }
+    }
+  }
+}
+

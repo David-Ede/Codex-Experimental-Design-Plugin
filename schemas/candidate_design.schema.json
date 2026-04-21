@@ -1,0 +1,199 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "candidate_design.schema.json",
+  "title": "Candidate Design",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "candidate_design_id",
+    "design_family",
+    "status",
+    "run_count",
+    "recommendation_label",
+    "ranking_score",
+    "capabilities",
+    "diagnostics",
+    "tradeoffs",
+    "learnability",
+    "source_artifacts",
+    "warnings"
+  ],
+  "properties": {
+    "candidate_design_id": {
+      "type": "string",
+      "pattern": "^candidate_[a-z0-9_]+$"
+    },
+    "design_id": {
+      "type": ["string", "null"],
+      "pattern": "^design_[a-z0-9_]+$"
+    },
+    "design_family": {
+      "type": "string",
+      "enum": [
+        "full_factorial",
+        "fractional_factorial",
+        "plackett_burman",
+        "box_behnken",
+        "central_composite",
+        "d_optimal",
+        "latin_hypercube",
+        "custom",
+        "sequential"
+      ]
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "recommended",
+        "available",
+        "available_with_warnings",
+        "not_recommended",
+        "infeasible",
+        "unsupported",
+        "failed_validation",
+        "stale"
+      ]
+    },
+    "run_count": {
+      "type": ["integer", "null"],
+      "minimum": 0
+    },
+    "recommendation_label": {
+      "type": "string",
+      "minLength": 1
+    },
+    "ranking_score": {
+      "type": ["number", "null"],
+      "minimum": 0,
+      "maximum": 1
+    },
+    "best_for": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "capabilities": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "main_effects",
+        "two_factor_interactions",
+        "quadratic_terms",
+        "curvature_detection",
+        "pure_error_estimate",
+        "blocking",
+        "randomization",
+        "missing_run_robustness",
+        "sequential_augmentation_path"
+      ],
+      "properties": {
+        "main_effects": {
+          "$ref": "candidate_design.schema.json#/$defs/capability"
+        },
+        "two_factor_interactions": {
+          "$ref": "candidate_design.schema.json#/$defs/capability"
+        },
+        "quadratic_terms": {
+          "$ref": "candidate_design.schema.json#/$defs/capability"
+        },
+        "curvature_detection": {
+          "$ref": "candidate_design.schema.json#/$defs/capability"
+        },
+        "pure_error_estimate": {
+          "$ref": "candidate_design.schema.json#/$defs/capability"
+        },
+        "blocking": {
+          "$ref": "candidate_design.schema.json#/$defs/capability"
+        },
+        "randomization": {
+          "$ref": "candidate_design.schema.json#/$defs/capability"
+        },
+        "missing_run_robustness": {
+          "$ref": "candidate_design.schema.json#/$defs/capability"
+        },
+        "sequential_augmentation_path": {
+          "$ref": "candidate_design.schema.json#/$defs/capability"
+        }
+      }
+    },
+    "diagnostics": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": ["model_matrix_rank", "n_model_columns", "condition_number", "estimable_term_fraction"],
+      "properties": {
+        "model_matrix_rank": {
+          "type": ["integer", "null"],
+          "minimum": 0
+        },
+        "n_model_columns": {
+          "type": ["integer", "null"],
+          "minimum": 0
+        },
+        "condition_number": {
+          "type": ["number", "null"],
+          "minimum": 0
+        },
+        "estimable_term_fraction": {
+          "type": ["number", "null"],
+          "minimum": 0,
+          "maximum": 1
+        }
+      }
+    },
+    "tradeoffs": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "unavailable_reasons": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "learnability": {
+      "$ref": "learnability_summary.schema.json"
+    },
+    "source_artifacts": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "candidate_design.schema.json#/$defs/source_artifact_ref"
+      }
+    },
+    "warnings": {
+      "type": "array",
+      "items": {
+        "$ref": "warning.schema.json"
+      }
+    }
+  },
+  "$defs": {
+    "capability": {
+      "type": "string",
+      "enum": ["supported", "partially_supported", "unsupported", "unknown", "not_applicable"]
+    },
+    "source_artifact_ref": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["artifact_type", "path", "artifact_hash"],
+      "properties": {
+        "artifact_type": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]*[a-z0-9]$"
+        },
+        "path": {
+          "type": "string",
+          "minLength": 1
+        },
+        "artifact_hash": {
+          "type": "string",
+          "pattern": "^sha256:[a-f0-9]{64}$"
+        }
+      }
+    }
+  }
+}
+

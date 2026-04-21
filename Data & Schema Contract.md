@@ -2399,3 +2399,65 @@ Rules:
 8. Relative yield and theoretical yield are derived artifacts, not raw observations.
 9. Design-space probability is a derived artifact with explicit unavailable states.
 10. Audit log is JSONL and append-only.
+
+## 31. Workbench Schema Addendum
+
+The workbench redesign extends the dashboard read model with an optional `workbench` section. Existing dashboard payloads remain valid. Workbench-enabled payloads must validate both the root dashboard payload contract and the nested workbench contracts.
+
+### 31.1 New Workbench Schema Files
+
+Required workbench foundation schemas:
+
+```text
+learnability_summary.schema.json
+candidate_design.schema.json
+candidate_design_set.schema.json
+design_comparison.schema.json
+run_plan_commit.schema.json
+study_snapshot.schema.json
+stale_state.schema.json
+contextual_ai_panel.schema.json
+workbench_payload.schema.json
+```
+
+### 31.2 Workbench Payload Section
+
+The optional `workbench` section contains:
+
+```text
+mode
+study_stage
+recommendation_mode
+candidate_design_sets
+active_comparison
+committed_run_plan
+snapshots
+stale_state
+contextual_ai_panels
+```
+
+Rules:
+
+```text
+- candidate designs must include source_artifacts;
+- contextual AI panels must include source_refs;
+- stale states must include reason codes and affected objects;
+- committed run plans must reference source candidate and comparison IDs;
+- React may render and filter this state but must not compute scientific diagnostics.
+```
+
+### 31.3 Required Workbench Fixtures
+
+Initial foundation fixture:
+
+```text
+fixtures/dashboard/workbench_candidate_designs_payload.json
+```
+
+Invalid traceability fixture:
+
+```text
+fixtures/dashboard/invalid_contextual_ai_panel_missing_source_refs.json
+```
+
+The schema validator must accept the workbench candidate fixture and reject the invalid contextual AI panel fixture.

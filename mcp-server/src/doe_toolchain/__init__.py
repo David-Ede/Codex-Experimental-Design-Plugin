@@ -22,6 +22,16 @@ LAUNCH_TOOL_NAMES: tuple[str, ...] = (
     "launch_dashboard_preview",
 )
 
+WORKBENCH_TOOL_NAMES: tuple[str, ...] = (
+    "generate_candidate_designs",
+    "rank_candidate_designs",
+    "compare_candidate_designs",
+    "commit_run_plan",
+    "create_study_snapshot",
+    "diff_study_snapshots",
+    "explain_study_object",
+)
+
 PAPER_CLASS_TOOL_NAMES: tuple[str, ...] = (
     "estimate_design_space_probability",
     "compare_verification_results",

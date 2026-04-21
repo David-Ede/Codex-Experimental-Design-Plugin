@@ -1,0 +1,46 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "stale_state.schema.json",
+  "title": "Stale State",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["is_stale", "stale_due_to", "affected_objects"],
+  "properties": {
+    "is_stale": {
+      "type": "boolean"
+    },
+    "stale_due_to": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "factor_space_changed",
+          "response_goals_changed",
+          "constraints_changed",
+          "objective_changed",
+          "execution_constraints_changed",
+          "expected_noise_changed"
+        ]
+      }
+    },
+    "affected_objects": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["object_type", "object_id"],
+        "properties": {
+          "object_type": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9_]*[a-z0-9]$"
+          },
+          "object_id": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    }
+  }
+}
+

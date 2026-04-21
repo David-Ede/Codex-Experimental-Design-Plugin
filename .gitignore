@@ -2,6 +2,9 @@
 node_modules/
 __pycache__/
 .pytest_cache/
+.tmp_pytest/
+.tmp_pytest_workbench/
+pytest-cache-files-*/
 .ruff_cache/
 *.pyc
 

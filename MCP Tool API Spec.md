@@ -3011,3 +3011,79 @@ weak_predictive_score
 8. Verification planning is launch required; verification result comparison is post-launch.
 9. Time-resolved import is launch required; richer time-resolved model fitting is post-launch.
 10. All tools use one common envelope and audit behavior.
+
+## 33. Workbench API Addendum
+
+The workbench redesign adds explicit study-object actions above the existing DOE and dashboard tools.
+
+### 33.1 New Workbench Tool Concepts
+
+Initial workbench tools:
+
+```text
+generate_candidate_designs
+rank_candidate_designs
+compare_candidate_designs
+commit_run_plan
+create_study_snapshot
+diff_study_snapshots
+explain_study_object
+```
+
+These tools may initially wrap existing launch tools such as `design_doe`, `design_optimal_doe`, and `generate_dashboard_payload`. The important API change is that candidate generation, comparison, and commitment become explicit artifacts.
+
+### 33.2 Candidate Design Artifacts
+
+`generate_candidate_designs` writes:
+
+```text
+outputs/studies/<study_id>/candidate_design_sets/<candidate_set_id>/candidate_design_set.json
+```
+
+The artifact must validate against:
+
+```text
+candidate_design_set.schema.json
+candidate_design.schema.json
+learnability_summary.schema.json
+```
+
+### 33.3 Comparison Artifacts
+
+`compare_candidate_designs` writes:
+
+```text
+outputs/studies/<study_id>/comparisons/<comparison_id>/design_comparison.json
+```
+
+The artifact must validate against:
+
+```text
+design_comparison.schema.json
+```
+
+### 33.4 Commit Artifacts
+
+`commit_run_plan` writes:
+
+```text
+outputs/studies/<study_id>/run_plans/<run_plan_id>/run_plan.json
+outputs/studies/<study_id>/run_plans/<run_plan_id>/run_matrix.csv
+outputs/studies/<study_id>/run_plans/<run_plan_id>/protocol_notes.md
+```
+
+The JSON artifact must validate against:
+
+```text
+run_plan_commit.schema.json
+```
+
+### 33.5 Explanation Contract
+
+`explain_study_object` returns or persists contextual explanation panels that validate against:
+
+```text
+contextual_ai_panel.schema.json
+```
+
+Source refs are required. Explanations without source refs are invalid because they cannot support scientific traceability.

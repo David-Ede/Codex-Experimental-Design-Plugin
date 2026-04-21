@@ -1,0 +1,52 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "learnability_summary.schema.json",
+  "title": "Learnability Summary",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["learnable", "not_learnable"],
+  "properties": {
+    "learnable": {
+      "type": "array",
+      "items": {
+        "$ref": "learnability_summary.schema.json#/$defs/learnability_item"
+      }
+    },
+    "not_learnable": {
+      "type": "array",
+      "items": {
+        "$ref": "learnability_summary.schema.json#/$defs/learnability_item"
+      }
+    }
+  },
+  "$defs": {
+    "learnability_item": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["claim", "label", "support", "source_ref"],
+      "properties": {
+        "claim": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]*[a-z0-9]$"
+        },
+        "label": {
+          "type": "string",
+          "minLength": 1
+        },
+        "support": {
+          "type": "string",
+          "enum": ["supported", "partially_supported", "unsupported", "unknown", "not_applicable"]
+        },
+        "reason_code": {
+          "type": ["string", "null"],
+          "pattern": "^[a-z][a-z0-9_]*[a-z0-9]$"
+        },
+        "source_ref": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    }
+  }
+}
+

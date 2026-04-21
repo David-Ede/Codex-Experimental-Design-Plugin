@@ -1033,3 +1033,54 @@ The implementation should proceed from contracts to computation to visualization
 ```
 
 This sequence minimizes the chance of producing persuasive but unaudited scientific output.
+
+## 14. Workbench Redesign Execution Insert
+
+The workbench redesign adds a product-shape milestone before the dashboard launch surface is treated as complete.
+
+### 14.1 Workbench Candidate Comparison Slice
+
+Goal:
+
+```text
+Prove the study-object-first product shape with fixture-backed candidate designs, comparison, and contextual AI explanation.
+```
+
+Build tasks:
+
+```text
+1. Add workbench schemas.
+2. Add workbench validation fixtures.
+3. Extend dashboard payload schema with optional workbench section.
+4. Add React WorkbenchShell.
+5. Add candidate design cards.
+6. Add design comparison table.
+7. Add right-rail AI advisor.
+8. Add source-ref diagnostics panel.
+```
+
+Acceptance criteria:
+
+```text
+- workbench_candidate_designs_payload.json validates;
+- invalid contextual AI panel without source refs fails validation;
+- React can render the workbench fixture;
+- candidate comparison shows run count, capabilities, diagnostics, tradeoffs, and can/cannot learn summaries;
+- existing dashboard fixtures remain valid.
+```
+
+### 14.2 Backend Follow-Up
+
+After the fixture-backed slice renders, implement:
+
+```text
+generate_candidate_designs
+rank_candidate_designs
+compare_candidate_designs
+commit_run_plan
+create_study_snapshot
+diff_study_snapshots
+explain_study_object
+```
+
+These tools become the MCP-backed source of the workbench payload sections.

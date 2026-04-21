@@ -1,0 +1,56 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "run_plan_commit.schema.json",
+  "title": "Run Plan Commit",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "run_plan_id",
+    "source_candidate_design_id",
+    "source_comparison_id",
+    "committed_at",
+    "run_count",
+    "run_matrix_path",
+    "protocol_notes_path",
+    "source_artifacts"
+  ],
+  "properties": {
+    "run_plan_id": {
+      "type": "string",
+      "pattern": "^run_plan_[a-z0-9_]+$"
+    },
+    "source_candidate_design_id": {
+      "type": "string",
+      "pattern": "^candidate_[a-z0-9_]+$"
+    },
+    "source_comparison_id": {
+      "type": "string",
+      "pattern": "^comparison_[a-z0-9_]+$"
+    },
+    "committed_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "run_count": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "run_matrix_path": {
+      "type": "string",
+      "minLength": 1
+    },
+    "protocol_notes_path": {
+      "type": "string",
+      "minLength": 1
+    },
+    "source_artifacts": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    }
+  }
+}
+

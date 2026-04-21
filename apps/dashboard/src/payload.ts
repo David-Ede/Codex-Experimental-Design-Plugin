@@ -2,6 +2,7 @@ import emptyPayloadState from "../../../fixtures/dashboard/empty_payload_state.j
 import payloadValidationError from "../../../fixtures/dashboard/payload_validation_error.json";
 import perfectLattePayload from "../../../fixtures/dashboard/perfect_latte_dummy_payload.json";
 import phase0DesignOnlyPayload from "../../../fixtures/dashboard/phase0_design_only_payload.json";
+import workbenchCandidateDesignsPayload from "../../../fixtures/dashboard/workbench_candidate_designs_payload.json";
 import minimalStudyPayload from "../../../fixtures/studies/minimal_doe/dashboard_payload.json";
 
 export type AvailabilityStatus =
@@ -61,6 +62,144 @@ export type DesignSummary = {
   matrix?: DesignRow[];
 };
 
+export type CapabilitySupport =
+  | "supported"
+  | "partially_supported"
+  | "unsupported"
+  | "unknown"
+  | "not_applicable";
+
+export type CandidateStatus =
+  | "recommended"
+  | "available"
+  | "available_with_warnings"
+  | "not_recommended"
+  | "infeasible"
+  | "unsupported"
+  | "failed_validation"
+  | "stale";
+
+export type LearnabilityItem = {
+  claim: string;
+  label: string;
+  support: CapabilitySupport;
+  reason_code: string | null;
+  source_ref: string;
+};
+
+export type CandidateDesign = {
+  candidate_design_id: string;
+  design_id: string | null;
+  design_family: string;
+  status: CandidateStatus;
+  run_count: number | null;
+  recommendation_label: string;
+  ranking_score: number | null;
+  best_for?: string[];
+  capabilities: Record<string, CapabilitySupport>;
+  diagnostics: {
+    model_matrix_rank: number | null;
+    n_model_columns: number | null;
+    condition_number: number | null;
+    estimable_term_fraction: number | null;
+    [key: string]: unknown;
+  };
+  tradeoffs: string[];
+  unavailable_reasons: string[];
+  learnability: {
+    learnable: LearnabilityItem[];
+    not_learnable: LearnabilityItem[];
+  };
+  source_artifacts: Array<{
+    artifact_type: string;
+    path: string;
+    artifact_hash: string;
+  }>;
+  warnings: Warning[];
+};
+
+export type CandidateDesignSet = {
+  candidate_set_id: string;
+  study_id: string;
+  source_snapshot_id: string | null;
+  recommendation_mode: string;
+  generated_at: string;
+  generator_tool: string;
+  input_hash: string;
+  candidates: CandidateDesign[];
+  ranking_summary: {
+    preferred_candidate_design_id: string | null;
+    ranking_basis: string;
+    weights: Record<string, number>;
+  };
+  warnings: Warning[];
+};
+
+export type DesignComparison = {
+  comparison_id: string;
+  candidate_set_id: string;
+  selected_candidate_design_ids: string[];
+  active_metrics: string[];
+  preferred_candidate_design_id: string | null;
+  user_selected_candidate_design_id: string | null;
+  decision_notes: string | null;
+  generated_at: string;
+};
+
+export type RunPlanCommit = {
+  run_plan_id: string;
+  source_candidate_design_id: string;
+  source_comparison_id: string;
+  committed_at: string;
+  run_count: number;
+  run_matrix_path: string;
+  protocol_notes_path: string;
+  source_artifacts: string[];
+};
+
+export type StudySnapshot = {
+  snapshot_id: string;
+  label: string;
+  created_at: string;
+  study_state_hash: string;
+  setup_hash: string;
+  active_candidate_set_id: string | null;
+  active_comparison_id: string | null;
+  committed_run_plan_id: string | null;
+  notes: string | null;
+};
+
+export type ContextualAIPanel = {
+  panel_id: string;
+  object_type: string;
+  object_id: string;
+  title: string;
+  summary: string;
+  best_for: string[];
+  tradeoffs: string[];
+  watch_out_for: string[];
+  source_refs: string[];
+};
+
+export type WorkbenchPayload = {
+  mode: string;
+  study_stage: string;
+  recommendation_mode: string;
+  candidate_design_sets: CandidateDesignSet[];
+  active_comparison: DesignComparison | null;
+  committed_run_plan: RunPlanCommit | null;
+  snapshots: StudySnapshot[];
+  stale_state: {
+    is_stale: boolean;
+    stale_due_to: string[];
+    affected_objects: Array<{
+      object_type: string;
+      object_id: string;
+    }>;
+  };
+  contextual_ai_panels: ContextualAIPanel[];
+};
+
 export type DashboardPayload = {
   version: string;
   payload_metadata: {
@@ -88,6 +227,7 @@ export type DashboardPayload = {
   sections: Record<string, Availability>;
   warnings: Warning[];
   audit: Record<string, unknown>;
+  workbench?: WorkbenchPayload | null;
 };
 
 export type PayloadValidationResult =
@@ -99,7 +239,8 @@ export const fixturePayloads = {
   invalid: payloadValidationError,
   latte: perfectLattePayload,
   minimal: minimalStudyPayload,
-  phase0: phase0DesignOnlyPayload
+  phase0: phase0DesignOnlyPayload,
+  workbench: workbenchCandidateDesignsPayload
 } as const;
 
 export type FixtureName = keyof typeof fixturePayloads;
@@ -118,6 +259,85 @@ function hasString(record: Record<string, unknown>, key: string): boolean {
 
 function hasArray(record: Record<string, unknown>, key: string): boolean {
   return Array.isArray(record[key]);
+}
+
+function isNonEmptyStringArray(value: unknown): value is string[] {
+  return Array.isArray(value) && value.length > 0 && value.every((item) => typeof item === "string" && item.length > 0);
+}
+
+function validateWorkbenchSection(value: unknown, errors: string[]) {
+  if (value === undefined || value === null) {
+    return;
+  }
+  if (!isRecord(value)) {
+    errors.push("workbench must be an object or null");
+    return;
+  }
+
+  const candidateSets = Array.isArray(value.candidate_design_sets) ? value.candidate_design_sets : [];
+  candidateSets.forEach((candidateSet, setIndex) => {
+    if (!isRecord(candidateSet)) {
+      errors.push(`workbench.candidate_design_sets[${setIndex}] must be an object`);
+      return;
+    }
+    const candidates = Array.isArray(candidateSet.candidates) ? candidateSet.candidates : [];
+    candidates.forEach((candidate, candidateIndex) => {
+      if (!isRecord(candidate)) {
+        errors.push(
+          `workbench.candidate_design_sets[${setIndex}].candidates[${candidateIndex}] must be an object`
+        );
+        return;
+      }
+      if (!Array.isArray(candidate.source_artifacts) || candidate.source_artifacts.length === 0) {
+        errors.push(
+          `workbench.candidate_design_sets[${setIndex}].candidates[${candidateIndex}].source_artifacts must contain at least one source artifact`
+        );
+      }
+      const status = candidate.status;
+      if (status === "unsupported" || status === "infeasible" || status === "failed_validation") {
+        if (candidate.ranking_score !== null) {
+          errors.push(
+            `workbench.candidate_design_sets[${setIndex}].candidates[${candidateIndex}].ranking_score must be null for ${status}`
+          );
+        }
+        const label = typeof candidate.recommendation_label === "string" ? candidate.recommendation_label.toLowerCase() : "";
+        if (label.includes("recommended")) {
+          errors.push(
+            `workbench.candidate_design_sets[${setIndex}].candidates[${candidateIndex}] cannot present ${status} as recommended`
+          );
+        }
+        const capabilities = isRecord(candidate.capabilities) ? Object.values(candidate.capabilities) : [];
+        if (status === "unsupported" && capabilities.includes("supported")) {
+          errors.push(
+            `workbench.candidate_design_sets[${setIndex}].candidates[${candidateIndex}] cannot show supported capabilities when unsupported`
+          );
+        }
+      }
+    });
+  });
+
+  const panels = Array.isArray(value.contextual_ai_panels) ? value.contextual_ai_panels : [];
+  panels.forEach((panel, index) => {
+    if (!isRecord(panel)) {
+      errors.push(`workbench.contextual_ai_panels[${index}] must be an object`);
+      return;
+    }
+    if (!isNonEmptyStringArray(panel.source_refs)) {
+      errors.push(`workbench.contextual_ai_panels[${index}].source_refs must contain at least one source ref`);
+    }
+  });
+
+  if (value.committed_run_plan !== null && value.committed_run_plan !== undefined) {
+    if (!isRecord(value.committed_run_plan)) {
+      errors.push("workbench.committed_run_plan must be an object or null");
+    } else {
+      for (const key of ["source_candidate_design_id", "source_comparison_id", "run_matrix_path"]) {
+        if (!hasString(value.committed_run_plan, key)) {
+          errors.push(`workbench.committed_run_plan.${key} must be a string`);
+        }
+      }
+    }
+  }
 }
 
 export function validateDashboardPayload(value: unknown): PayloadValidationResult {
@@ -172,6 +392,8 @@ export function validateDashboardPayload(value: unknown): PayloadValidationResul
     errors.push("factor_space must be an object or null");
   }
 
+  validateWorkbenchSection(value.workbench, errors);
+
   return errors.length === 0
     ? { ok: true, data: value as DashboardPayload, errors: [] }
     : { ok: false, data: null, errors };
@@ -183,4 +405,9 @@ export function getFixtureNameFromLocation(search: string): FixtureName {
     return requested as FixtureName;
   }
   return defaultFixtureName;
+}
+
+export function getPayloadUrlFromLocation(search: string): string | null {
+  const requested = new URLSearchParams(search).get("payloadUrl");
+  return requested && requested.length > 0 ? requested : null;
 }

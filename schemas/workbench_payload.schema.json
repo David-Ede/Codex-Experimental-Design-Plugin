@@ -1,0 +1,94 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "workbench_payload.schema.json",
+  "title": "Workbench Payload Section",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "mode",
+    "study_stage",
+    "recommendation_mode",
+    "candidate_design_sets",
+    "active_comparison",
+    "committed_run_plan",
+    "snapshots",
+    "stale_state",
+    "contextual_ai_panels"
+  ],
+  "properties": {
+    "mode": {
+      "type": "string",
+      "enum": ["candidate_comparison", "setup", "run_plan", "snapshot_diff", "diagnostics"]
+    },
+    "study_stage": {
+      "type": "string",
+      "enum": [
+        "draft_setup",
+        "validated_setup",
+        "candidates_generated",
+        "candidates_compared",
+        "run_plan_committed",
+        "observations_imported",
+        "model_fit",
+        "augmentation_recommended",
+        "verification_planned",
+        "verification_observed"
+      ]
+    },
+    "recommendation_mode": {
+      "type": "string",
+      "enum": [
+        "minimize_runs",
+        "screen_important_factors",
+        "estimate_interactions",
+        "fit_curvature",
+        "optimize_response",
+        "respect_material_time_constraints",
+        "prepare_scale_up_robustness",
+        "custom_weighted_objective"
+      ]
+    },
+    "candidate_design_sets": {
+      "type": "array",
+      "items": {
+        "$ref": "candidate_design_set.schema.json"
+      }
+    },
+    "active_comparison": {
+      "anyOf": [
+        {
+          "$ref": "design_comparison.schema.json"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "committed_run_plan": {
+      "anyOf": [
+        {
+          "$ref": "run_plan_commit.schema.json"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "snapshots": {
+      "type": "array",
+      "items": {
+        "$ref": "study_snapshot.schema.json"
+      }
+    },
+    "stale_state": {
+      "$ref": "stale_state.schema.json"
+    },
+    "contextual_ai_panels": {
+      "type": "array",
+      "items": {
+        "$ref": "contextual_ai_panel.schema.json"
+      }
+    }
+  }
+}
+

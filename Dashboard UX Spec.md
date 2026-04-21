@@ -1552,3 +1552,75 @@ The dashboard succeeds when it makes the scientific state hard to misread. A use
 - model-based estimate from experimental evidence;
 - optional economics from required analysis.
 ```
+
+## 33. Workbench UX Addendum
+
+The dashboard is being migrated into a workbench. During migration the technical app may remain under `apps/dashboard`, but the product surface should behave as a study-object-first experiment strategy workspace.
+
+### 33.1 Workbench Layout
+
+Required desktop layout:
+
+```text
+left rail:
+  study stages, status, snapshots
+
+center workspace:
+  setup, candidate designs, comparison, run plan, diagnostics
+
+right rail:
+  contextual AI advisor, warnings, explanation cards
+
+bottom drawer:
+  run matrix, source artifacts, diagnostics, audit details
+```
+
+### 33.2 Candidate Comparison Surface
+
+The first workbench surface must include:
+
+```text
+- candidate design cards
+- side-by-side comparison table
+- can learn / cannot learn panel
+- source-cited Why this design card
+- stale-state and unavailable-state display
+```
+
+Candidate cards show:
+
+```text
+- design family
+- status
+- run count
+- recommendation label
+- ranking score
+- best for
+- capability flags
+- diagnostics
+- tradeoffs
+- warnings
+```
+
+### 33.3 AI Advisor UX Rules
+
+The AI advisor rail must:
+
+```text
+- default to object-bound explanations, not an empty chat box;
+- show source refs for scientific claims;
+- expose tradeoffs and watch-outs;
+- never hide blocking or warning states behind recommendation copy.
+```
+
+### 33.4 Migration Acceptance Criteria
+
+The workbench slice is usable when:
+
+```text
+- a workbench fixture renders three candidate designs;
+- the comparison table makes the recommended design auditable;
+- the right rail explains the selected design with source refs;
+- unavailable sections remain explicit;
+- current dashboard fixtures still render.
+```

@@ -18,9 +18,11 @@ Use this skill when creating, validating, or reviewing DOE and IVT/QbD study art
 
 1. Create or select a study with `create_or_update_study`.
 2. Validate factors and responses before any design work.
-3. Generate or refresh `dashboard_payload.json` before launching the dashboard preview.
-4. Surface warnings, unavailable states, and validation failures directly in user-facing summaries.
-5. Cite persisted artifact paths as the source of truth.
+3. Prefer study-object-first workbench flows over chat-only inspection.
+4. Generate candidate designs and comparisons before committing a run plan when the user is choosing a DOE strategy.
+5. Generate or refresh `dashboard_payload.json` before launching the dashboard or workbench preview.
+6. Surface warnings, unavailable states, and validation failures directly in user-facing summaries.
+7. Cite persisted artifact paths as the source of truth.
 
 ## Guardrails
 
@@ -30,6 +32,8 @@ Use this skill when creating, validating, or reviewing DOE and IVT/QbD study art
 - Component costs must come from direct user input. Never infer or fetch reagent prices.
 - Missing optional inputs must be represented as unavailable states, not as zeros or successful results.
 - Verification plans are not verification results.
+- Candidate recommendations must expose tradeoffs and what the design can and cannot learn.
+- Contextual AI explanations must cite source artifacts or diagnostics.
 
 ## Gate 0 Smoke Prompt
 

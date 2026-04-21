@@ -1,16 +1,23 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   type Availability,
+  type CandidateDesign,
+  type CandidateStatus,
+  type ContextualAIPanel,
   type DashboardPayload,
   type DesignRow,
-  type FixtureName,
+  type RunPlanCommit,
+  type StudySnapshot,
+  type WorkbenchPayload,
   defaultFixtureName,
   fixturePayloads,
   getFixtureNameFromLocation,
+  getPayloadUrlFromLocation,
   validateDashboardPayload
 } from "./payload";
 
 type TabId =
+  | "workbench"
   | "overview"
   | "matrix"
   | "results"
@@ -23,6 +30,7 @@ type TabId =
   | "diagnostics";
 
 const tabs: Array<{ id: TabId; label: string; section: string }> = [
+  { id: "workbench", label: "Workbench", section: "workbench" },
   { id: "overview", label: "Overview", section: "diagnostics" },
   { id: "matrix", label: "Matrix", section: "experiment_matrix" },
   { id: "results", label: "Results", section: "endpoint_results" },
@@ -107,27 +115,85 @@ function sectionIsAvailable(payload: DashboardPayload, section: string): boolean
   return getSection(payload, section)?.status === "available";
 }
 
+type StatusKind = Availability["status"] | CandidateStatus | "current";
+
 export default function App() {
   const fixtureName = useMemo(() => getFixtureNameFromLocation(window.location.search), []);
-  const validation = useMemo(() => validateDashboardPayload(fixturePayloads[fixtureName]), [fixtureName]);
+  const payloadUrl = useMemo(() => getPayloadUrlFromLocation(window.location.search), []);
+  const [rawPayload, setRawPayload] = useState<unknown | null>(
+    payloadUrl ? null : fixturePayloads[fixtureName]
+  );
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const validation = useMemo(
+    () => (rawPayload === null ? null : validateDashboardPayload(rawPayload)),
+    [rawPayload]
+  );
   const [activeTab, setActiveTab] = useState<TabId>("overview");
+  const sourceLabel = payloadUrl ?? `fixture:${fixtureName}`;
+
+  useEffect(() => {
+    if (!payloadUrl) {
+      setRawPayload(fixturePayloads[fixtureName]);
+      setLoadError(null);
+      return;
+    }
+
+    let cancelled = false;
+    setRawPayload(null);
+    setLoadError(null);
+    fetch(payloadUrl)
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error(`payload fetch failed with ${response.status}`);
+        }
+        return response.json();
+      })
+      .then((payload) => {
+        if (!cancelled) {
+          setRawPayload(payload);
+        }
+      })
+      .catch((error: unknown) => {
+        if (!cancelled) {
+          setLoadError(error instanceof Error ? error.message : "payload fetch failed");
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [fixtureName, payloadUrl]);
+
+  useEffect(() => {
+    if (validation?.ok && validation.data.workbench && activeTab === "overview") {
+      setActiveTab("workbench");
+    }
+  }, [activeTab, validation]);
+
+  if (loadError) {
+    return <PayloadError sourceLabel={sourceLabel} errors={[loadError]} />;
+  }
+
+  if (validation === null) {
+    return <PayloadLoading sourceLabel={sourceLabel} />;
+  }
 
   if (!validation.ok) {
-    return <PayloadError fixtureName={fixtureName} errors={validation.errors} />;
+    return <PayloadError sourceLabel={sourceLabel} errors={validation.errors} />;
   }
 
   if (!validation.data.study) {
-    return <EmptyState payload={validation.data} fixtureName={fixtureName} />;
+    return <EmptyState payload={validation.data} sourceLabel={sourceLabel} />;
   }
 
   return (
     <div className="app-shell">
       <Sidebar payload={validation.data} activeTab={activeTab} setActiveTab={setActiveTab} />
       <div className="dashboard-main">
-        <TopBar payload={validation.data} fixtureName={fixtureName} />
-        <StudyHeader payload={validation.data} fixtureName={fixtureName} />
+        <TopBar payload={validation.data} sourceLabel={sourceLabel} />
+        <StudyHeader payload={validation.data} sourceLabel={sourceLabel} />
         <WarningStrip payload={validation.data} />
-        <main className="workspace">
+        <main className={activeTab === "workbench" ? "workspace workspace--workbench" : "workspace"}>
           <DashboardContent payload={validation.data} activeTab={activeTab} />
         </main>
         <PayloadFooter payload={validation.data} />
@@ -151,9 +217,9 @@ function Sidebar({
         <span className="brand-mark" aria-hidden="true">
           D
         </span>
-        <strong>DOE X</strong>
+        <strong>DOE Workbench</strong>
       </div>
-      <div className="sidebar-search">Search study payload...</div>
+      <div className="sidebar-search">Study object workspace</div>
       <nav className="sidebar-tabs" aria-label="Dashboard sections" role="tablist">
         {tabs.map((tab) => (
           <button
@@ -182,12 +248,12 @@ function Sidebar({
   );
 }
 
-function TopBar({ payload, fixtureName }: { payload: DashboardPayload; fixtureName: FixtureName }) {
+function TopBar({ payload, sourceLabel }: { payload: DashboardPayload; sourceLabel: string }) {
   return (
     <div className="top-bar">
-      <div className="breadcrumb">Dashboard / Reports</div>
+      <div className="breadcrumb">Workbench / Study</div>
       <div className="top-actions">
-        <span className="top-pill">Fixture: {fixtureName}</span>
+        <span className="top-pill">Source: {sourceLabel}</span>
         <span className="notification-dot" aria-label="Payload ready" />
         <span className="avatar avatar--small" aria-hidden="true">
           {payload.study?.study_id.slice(0, 2).toUpperCase() ?? "NA"}
@@ -197,7 +263,7 @@ function TopBar({ payload, fixtureName }: { payload: DashboardPayload; fixtureNa
   );
 }
 
-function StudyHeader({ payload, fixtureName }: { payload: DashboardPayload; fixtureName: FixtureName }) {
+function StudyHeader({ payload, sourceLabel }: { payload: DashboardPayload; sourceLabel: string }) {
   const study = payload.study;
   if (!study) {
     return null;
@@ -215,7 +281,7 @@ function StudyHeader({ payload, fixtureName }: { payload: DashboardPayload; fixt
         <Fact label="Design" value={study.active_design_id ?? "unavailable"} />
         <Fact label="Fit" value={study.active_fit_id ?? "unavailable"} />
         <Fact label="Payload" value={payload.payload_metadata.generated_at} />
-        <Fact label="Fixture" value={fixtureName} />
+        <Fact label="Source" value={sourceLabel} />
       </dl>
     </header>
   );
@@ -257,6 +323,13 @@ function AvailabilityDot({ availability }: { availability?: Availability }) {
 }
 
 function DashboardContent({ payload, activeTab }: { payload: DashboardPayload; activeTab: TabId }) {
+  if (activeTab === "workbench") {
+    return payload.workbench ? (
+      <WorkbenchView payload={payload} workbench={payload.workbench} />
+    ) : (
+      <AvailabilityPanel title="Workbench" availability={payload.sections.workbench} />
+    );
+  }
   if (activeTab === "overview") {
     return <Overview payload={payload} />;
   }
@@ -308,6 +381,387 @@ function DashboardContent({ payload, activeTab }: { payload: DashboardPayload; a
       title={tabs.find((tab) => tab.id === activeTab)?.label ?? activeTab}
       availability={payload.sections[section]}
     />
+  );
+}
+
+export function WorkbenchView({
+  payload,
+  workbench
+}: {
+  payload: DashboardPayload;
+  workbench: WorkbenchPayload;
+}) {
+  const candidateSet = workbench.candidate_design_sets[0];
+  const candidates = candidateSet?.candidates ?? [];
+  const preferredId =
+    workbench.active_comparison?.preferred_candidate_design_id ??
+    candidateSet?.ranking_summary.preferred_candidate_design_id ??
+    candidates[0]?.candidate_design_id;
+  const selected = candidates.find((candidate) => candidate.candidate_design_id === preferredId) ?? candidates[0];
+  const advisorPanel =
+    workbench.contextual_ai_panels.find((panel) => panel.object_id === selected?.candidate_design_id) ??
+    workbench.contextual_ai_panels[0];
+
+  return (
+    <div className="workbench-layout">
+      <aside className="study-rail" aria-label="Study stages">
+        <p className="eyebrow">Study Stage</p>
+        <h2>{workbench.study_stage.replaceAll("_", " ")}</h2>
+        <StageList workbench={workbench} />
+        <div className="snapshot-box">
+          <span>Snapshots</span>
+          <strong>{workbench.snapshots.length}</strong>
+          <SnapshotList snapshots={workbench.snapshots} />
+        </div>
+      </aside>
+
+      <section className="workbench-center" aria-labelledby="workbench-title">
+        <div className="section-heading">
+          <div>
+            <p className="eyebrow">Candidate Design Comparison</p>
+            <h2 id="workbench-title">{payload.study?.title ?? "Workbench"}</h2>
+            <p>{candidateSet?.ranking_summary.ranking_basis ?? "Candidate comparison is unavailable."}</p>
+          </div>
+          <StatusBadge status={payload.sections.workbench?.status ?? "unavailable_not_run"} />
+        </div>
+
+        <div className="workbench-summary">
+          <Metric label="Mode" value={workbench.recommendation_mode.replaceAll("_", " ")} detail="ranking objective" />
+          <Metric label="Candidates" value={String(candidates.length)} detail={candidateSet?.candidate_set_id ?? "none"} />
+          <Metric
+            label="Preferred"
+            value={selected?.design_family.replaceAll("_", " ") ?? "none"}
+            detail={selected?.candidate_design_id ?? "not selected"}
+          />
+          <Metric
+            label="Committed"
+            value={workbench.committed_run_plan ? workbench.committed_run_plan.run_plan_id : "none"}
+            detail={workbench.committed_run_plan ? `${workbench.committed_run_plan.run_count} planned runs` : "run plan not committed"}
+          />
+        </div>
+
+        <CandidateDesignGrid candidates={candidates} preferredId={preferredId ?? null} />
+        <DesignComparisonTable candidates={candidates} />
+        {selected ? <LearnCannotLearnPanel candidate={selected} /> : null}
+        {workbench.committed_run_plan ? <CommittedRunPlanPanel runPlan={workbench.committed_run_plan} /> : null}
+      </section>
+
+      <AIAdvisorRail panel={advisorPanel} selected={selected} />
+
+      <section className="workbench-drawer" aria-label="Workbench diagnostics">
+        <div>
+          <strong>Stale state</strong>
+          <span>{workbench.stale_state.is_stale ? workbench.stale_state.stale_due_to.join(", ") : "current"}</span>
+          {workbench.stale_state.affected_objects.length > 0 ? (
+            <span>
+              {workbench.stale_state.affected_objects
+                .map((object) => `${object.object_type}:${object.object_id}`)
+                .join(", ")}
+            </span>
+          ) : null}
+        </div>
+        <div>
+          <strong>Source artifacts</strong>
+          <SourceArtifactSummary
+            selected={selected}
+            runPlan={workbench.committed_run_plan}
+            candidateSetPath={payload.sections.workbench?.source_artifacts ?? []}
+          />
+        </div>
+      </section>
+    </div>
+  );
+}
+
+function StageList({ workbench }: { workbench: WorkbenchPayload }) {
+  const stages = [
+    "validated_setup",
+    "candidates_generated",
+    "candidates_compared",
+    "run_plan_committed"
+  ];
+
+  return (
+    <ol className="stage-list">
+      {stages.map((stage) => {
+        const isActive = stage === workbench.study_stage;
+        const activeIndex = Math.max(0, stages.indexOf(workbench.study_stage));
+        const isComplete = stages.indexOf(stage) < activeIndex;
+        return (
+          <li className={isActive ? "stage-list__item stage-list__item--active" : "stage-list__item"} key={stage}>
+            <span aria-hidden="true">{isComplete ? "done" : "-"}</span>
+            {stage.replaceAll("_", " ")}
+          </li>
+        );
+      })}
+    </ol>
+  );
+}
+
+function SnapshotList({ snapshots }: { snapshots: StudySnapshot[] }) {
+  if (snapshots.length === 0) {
+    return <span className="muted-line">No snapshots yet</span>;
+  }
+
+  return (
+    <ul className="snapshot-list" aria-label="Study snapshots">
+      {snapshots.slice(-3).map((snapshot) => (
+        <li key={snapshot.snapshot_id}>
+          <strong>{snapshot.label}</strong>
+          <span>{snapshot.committed_run_plan_id ?? snapshot.active_comparison_id ?? snapshot.active_candidate_set_id ?? "setup only"}</span>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+function SourceArtifactSummary({
+  selected,
+  runPlan,
+  candidateSetPath
+}: {
+  selected?: CandidateDesign;
+  runPlan: RunPlanCommit | null;
+  candidateSetPath: string[];
+}) {
+  const refs = [
+    ...candidateSetPath,
+    ...(selected?.source_artifacts.map((artifact) => artifact.path) ?? []),
+    ...(runPlan?.source_artifacts ?? [])
+  ];
+  const uniqueRefs = Array.from(new Set(refs));
+
+  if (uniqueRefs.length === 0) {
+    return <span>none</span>;
+  }
+
+  return (
+    <>
+      {uniqueRefs.slice(0, 6).map((ref) => (
+        <span key={ref}>{ref}</span>
+      ))}
+    </>
+  );
+}
+
+function CandidateDesignGrid({
+  candidates,
+  preferredId
+}: {
+  candidates: CandidateDesign[];
+  preferredId: string | null;
+}) {
+  return (
+    <div className="candidate-grid" aria-label="Candidate designs">
+      {candidates.map((candidate) => (
+        <article
+          className={
+            candidate.candidate_design_id === preferredId
+              ? "candidate-card candidate-card--preferred"
+              : "candidate-card"
+          }
+          key={candidate.candidate_design_id}
+        >
+          <div className="candidate-card__header">
+            <div>
+              <span className="eyebrow">{candidate.design_family.replaceAll("_", " ")}</span>
+              <h3>{candidate.recommendation_label}</h3>
+            </div>
+            <StatusBadge status={candidate.status} />
+          </div>
+          <div className="candidate-metrics">
+            <span>
+              <strong>{candidate.run_count ?? "n/a"}</strong>
+              runs
+            </span>
+            <span>
+              <strong>{candidate.ranking_score === null ? "n/a" : candidate.ranking_score.toFixed(2)}</strong>
+              score
+            </span>
+            <span>
+              <strong>
+                {candidate.diagnostics.condition_number === null
+                  ? "n/a"
+                  : candidate.diagnostics.condition_number.toFixed(1)}
+              </strong>
+              condition
+            </span>
+          </div>
+          <ul className="compact-list">
+            {(candidate.best_for ?? []).slice(0, 3).map((item) => (
+              <li key={item}>{item}</li>
+            ))}
+          </ul>
+          {candidate.unavailable_reasons.length > 0 ? (
+            <div className="candidate-reasons" aria-label="Unavailable reasons">
+              {candidate.unavailable_reasons.map((reason) => (
+                <span key={reason}>{reason.replaceAll("_", " ")}</span>
+              ))}
+            </div>
+          ) : null}
+          {candidate.warnings.length > 0 ? (
+            <div className="candidate-warning-list" aria-label="Candidate warnings">
+              {candidate.warnings.map((warning) => (
+                <span key={`${candidate.candidate_design_id}-${warning.code}`}>{warning.message}</span>
+              ))}
+            </div>
+          ) : null}
+        </article>
+      ))}
+    </div>
+  );
+}
+
+function DesignComparisonTable({ candidates }: { candidates: CandidateDesign[] }) {
+  const rows = [
+    ["Runs", (candidate: CandidateDesign) => formatValue(candidate.run_count, 0)],
+    ["Main effects", (candidate: CandidateDesign) => candidate.capabilities.main_effects],
+    ["Interactions", (candidate: CandidateDesign) => candidate.capabilities.two_factor_interactions],
+    ["Curvature", (candidate: CandidateDesign) => candidate.capabilities.curvature_detection],
+    ["Pure error", (candidate: CandidateDesign) => candidate.capabilities.pure_error_estimate],
+    [
+      "Estimable terms",
+      (candidate: CandidateDesign) =>
+        candidate.diagnostics.estimable_term_fraction === null
+          ? "unknown"
+          : `${Math.round(candidate.diagnostics.estimable_term_fraction * 100)}%`
+    ]
+  ] as const;
+
+  return (
+    <section className="comparison-panel" aria-labelledby="comparison-title">
+      <div className="section-heading section-heading--compact">
+        <h3 id="comparison-title">Side-by-side comparison</h3>
+        <span className="top-pill">computed payload</span>
+      </div>
+      <div className="matrix-wrap">
+        <table className="matrix-table">
+          <thead>
+            <tr>
+              <th>Metric</th>
+              {candidates.map((candidate) => (
+                <th key={candidate.candidate_design_id}>{candidate.design_family.replaceAll("_", " ")}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map(([label, getter]) => (
+              <tr key={label}>
+                <td>{label}</td>
+                {candidates.map((candidate) => (
+                  <td key={`${candidate.candidate_design_id}-${label}`}>
+                    <CapabilityText value={getter(candidate)} />
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  );
+}
+
+function CapabilityText({ value }: { value: string }) {
+  const normalized = value.replaceAll("_", " ");
+  return <span className={`capability-text capability-text--${value}`}>{normalized}</span>;
+}
+
+function LearnCannotLearnPanel({ candidate }: { candidate: CandidateDesign }) {
+  return (
+    <section className="learn-panel" aria-label="What this design can and cannot learn">
+      <div>
+        <h3>Can Learn</h3>
+        <ul className="compact-list">
+          {candidate.learnability.learnable.map((item) => (
+            <li key={item.claim}>
+              {item.label}
+              <small>{item.source_ref}</small>
+            </li>
+          ))}
+        </ul>
+      </div>
+      <div>
+        <h3>Cannot Learn</h3>
+        <ul className="compact-list">
+          {candidate.learnability.not_learnable.map((item) => (
+            <li key={item.claim}>
+              {item.label}
+              <small>{item.source_ref}</small>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </section>
+  );
+}
+
+function CommittedRunPlanPanel({ runPlan }: { runPlan: RunPlanCommit }) {
+  return (
+    <section className="run-plan-panel" aria-labelledby="run-plan-title">
+      <div className="section-heading section-heading--compact">
+        <div>
+          <h3 id="run-plan-title">Committed Run Plan</h3>
+          <p>{runPlan.source_candidate_design_id} is locked as an executable plan.</p>
+        </div>
+        <StatusBadge status="current" />
+      </div>
+      <div className="run-plan-grid">
+        <Fact label="Run plan" value={runPlan.run_plan_id} />
+        <Fact label="Runs" value={String(runPlan.run_count)} />
+        <Fact label="Comparison" value={runPlan.source_comparison_id} />
+        <Fact label="Matrix" value={runPlan.run_matrix_path} />
+        <Fact label="Protocol notes" value={runPlan.protocol_notes_path} />
+      </div>
+    </section>
+  );
+}
+
+function AIAdvisorRail({
+  panel,
+  selected
+}: {
+  panel?: ContextualAIPanel;
+  selected?: CandidateDesign;
+}) {
+  if (!panel || !selected) {
+    return (
+      <aside className="advisor-rail" aria-label="AI advisor">
+        <p className="eyebrow">AI Advisor</p>
+        <h2>No explanation panel</h2>
+        <p>Generate a contextual AI panel with source refs to populate this rail.</p>
+      </aside>
+    );
+  }
+
+  return (
+    <aside className="advisor-rail" aria-label="AI advisor">
+      <p className="eyebrow">AI Advisor</p>
+      <h2>{panel.title}</h2>
+      <p>{panel.summary}</p>
+      <AdvisorList title="Best for" items={panel.best_for} />
+      <AdvisorList title="Tradeoffs" items={panel.tradeoffs} />
+      <AdvisorList title="Watch out for" items={panel.watch_out_for} />
+      <div className="source-ref-box">
+        <strong>Source refs</strong>
+        {panel.source_refs.map((ref) => (
+          <span key={ref}>{ref}</span>
+        ))}
+      </div>
+    </aside>
+  );
+}
+
+function AdvisorList({ title, items }: { title: string; items: string[] }) {
+  return (
+    <div className="advisor-list">
+      <strong>{title}</strong>
+      <ul className="compact-list">
+        {items.map((item) => (
+          <li key={item}>{item}</li>
+        ))}
+      </ul>
+    </div>
   );
 }
 
@@ -954,7 +1408,7 @@ function DiagnosticBlock({ title, children }: { title: string; children: React.R
   );
 }
 
-function StatusBadge({ status }: { status: Availability["status"] }) {
+function StatusBadge({ status }: { status: StatusKind }) {
   return <span className={`status-badge status-badge--${status}`}>{status}</span>;
 }
 
@@ -968,12 +1422,24 @@ function PayloadFooter({ payload }: { payload: DashboardPayload }) {
   );
 }
 
-function PayloadError({ fixtureName, errors }: { fixtureName: FixtureName; errors: string[] }) {
+function PayloadLoading({ sourceLabel }: { sourceLabel: string }) {
+  return (
+    <main className="app-shell app-shell--single">
+      <section className="panel panel--availability" aria-labelledby="payload-loading-title">
+        <p className="eyebrow">Payload source</p>
+        <h1 id="payload-loading-title">Loading workbench payload.</h1>
+        <p>{sourceLabel}</p>
+      </section>
+    </main>
+  );
+}
+
+function PayloadError({ sourceLabel, errors }: { sourceLabel: string; errors: string[] }) {
   return (
     <main className="app-shell app-shell--single">
       <section className="panel panel--error" aria-labelledby="payload-error-title">
         <p className="eyebrow">Payload validation error</p>
-        <h1 id="payload-error-title">Fixture `{fixtureName}` cannot be rendered as a dashboard payload.</h1>
+        <h1 id="payload-error-title">Payload `{sourceLabel}` cannot be rendered as a dashboard payload.</h1>
         <ul>
           {errors.map((error) => (
             <li key={error}>{error}</li>
@@ -985,11 +1451,11 @@ function PayloadError({ fixtureName, errors }: { fixtureName: FixtureName; error
   );
 }
 
-function EmptyState({ payload, fixtureName }: { payload: DashboardPayload; fixtureName: FixtureName }) {
+function EmptyState({ payload, sourceLabel }: { payload: DashboardPayload; sourceLabel: string }) {
   return (
     <main className="app-shell app-shell--single">
       <section className="panel panel--availability" aria-labelledby="empty-title">
-        <p className="eyebrow">Fixture {fixtureName || defaultFixtureName}</p>
+        <p className="eyebrow">Payload {sourceLabel || defaultFixtureName}</p>
         <h1 id="empty-title">No study payload is available.</h1>
         <p>Run generate_dashboard_payload from Codex to create one.</p>
         <PayloadFooter payload={payload} />

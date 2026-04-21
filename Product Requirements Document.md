@@ -1063,3 +1063,73 @@ Actual yield divided by theoretical maximum yield, expressed as a percentage.
 
 **Theoretical yield**
 Maximum possible product yield based on sequence composition and limiting substrate.
+
+## 17. Workbench Redesign Requirements
+
+The product direction is updated to prioritize a study-object-first workbench. Chat remains available for intent capture and explanation, but the primary DOE decision surface is the structured workbench.
+
+### 17.1 Product Principle Update
+
+The main object is the study, not the conversation.
+
+Required behavior:
+
+```text
+- users can inspect factors, responses, constraints, candidates, diagnostics, and recommendations without asking chat;
+- AI explanations attach to specific study objects;
+- candidate design comparison is a first-class workflow;
+- run-plan commitment is explicit and auditable;
+- study versions and snapshots preserve reasoning across changed assumptions.
+```
+
+### 17.2 Candidate Design Comparison Requirement
+
+The product must support candidate design comparison before a run plan is committed.
+
+Acceptance criteria:
+
+```text
+- at least two candidate designs can be represented in one candidate set;
+- each candidate displays run count, design family, status, capabilities, diagnostics, tradeoffs, warnings, and source artifacts;
+- the comparison view shows what each design can and cannot learn;
+- the preferred design is justified by ranking reason codes and diagnostics;
+- infeasible or unsupported designs are represented explicitly rather than omitted.
+```
+
+### 17.3 Contextual AI Requirement
+
+AI explanation panels must be object-bound and source-cited.
+
+Acceptance criteria:
+
+```text
+- every explanation panel includes object_type, object_id, title, summary, best_for, tradeoffs, watch_out_for, and source_refs;
+- explanation panels without source_refs fail schema validation;
+- AI must not invent numerical diagnostics, run counts, cost values, or recommendations;
+- warning explanations identify scientific impact and suggested fix.
+```
+
+### 17.4 Run Plan Commitment Requirement
+
+The product must distinguish recommended, selected, and committed designs.
+
+Acceptance criteria:
+
+```text
+- committing a design creates a run_plan artifact;
+- the run plan references the source candidate design and comparison;
+- committed run matrix and protocol notes remain stable after later UI selection changes;
+- audit log records commit_run_plan events.
+```
+
+### 17.5 Snapshot Requirement
+
+The product must represent study snapshots for iterative DOE reasoning.
+
+Acceptance criteria:
+
+```text
+- snapshots preserve setup hash, candidate set ID, comparison ID, and committed run plan ID;
+- snapshot diffs identify factor, response, constraint, objective, and design changes;
+- stale-state indicators appear when upstream setup changes invalidate downstream candidates or comparisons.
+```

@@ -124,6 +124,16 @@
     },
     "audit": {
       "type": "object"
+    },
+    "workbench": {
+      "anyOf": [
+        {
+          "$ref": "workbench_payload.schema.json"
+        },
+        {
+          "type": "null"
+        }
+      ]
     }
   },
   "$defs": {

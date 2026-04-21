@@ -372,3 +372,56 @@ No feature is complete until this mapping exists and its gate passes.
 ## 13. Final Build Rule
 
 The product is production-grade only when a reviewer can reproduce every displayed scientific result from source inputs, schema-valid artifacts, method versions, package versions, warnings, and audit logs. Anything without complete provenance is unavailable or invalid, not merely undocumented.
+
+## 14. Workbench Redesign Addendum
+
+The next product direction is a study-object-first workbench, not a chat-first dashboard. The current plugin, MCP, artifact, and React architecture remains valid, but the React surface becomes the primary experiment strategy workspace.
+
+Canonical workbench shape:
+
+```text
+Codex skill -> MCP tools -> schema-valid study artifacts -> workbench payload -> React workbench
+```
+
+Required workbench concepts:
+
+```text
+- study setup state
+- recommendation mode
+- candidate design sets
+- candidate design capability diagnostics
+- can learn / cannot learn summaries
+- design comparisons
+- contextual AI panels with source refs
+- stale-state indicators
+- committed run plans
+- study snapshots
+```
+
+The first build slice is the Workbench Candidate Comparison Slice:
+
+```text
+1. Add workbench schemas and fixtures.
+2. Render candidate design cards.
+3. Render a side-by-side design comparison table.
+4. Render a right-rail AI advisor panel.
+5. Require source refs for AI explanation panels.
+```
+
+The technical directory may remain `apps/dashboard` during migration. User-facing language should move toward "Workbench", "Study Setup", "Candidate Designs", "Compare", "Run Plan", and "AI Advisor".
+
+New schema files introduced for the workbench foundation:
+
+```text
+learnability_summary.schema.json
+candidate_design.schema.json
+candidate_design_set.schema.json
+design_comparison.schema.json
+run_plan_commit.schema.json
+study_snapshot.schema.json
+stale_state.schema.json
+contextual_ai_panel.schema.json
+workbench_payload.schema.json
+```
+
+The dashboard payload may include an optional `workbench` section. Existing dashboard payloads remain valid while the workbench migration proceeds.

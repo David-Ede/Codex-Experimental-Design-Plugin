@@ -1,0 +1,490 @@
+{
+  "version": "1.0.0",
+  "payload_metadata": {
+    "payload_id": "payload_workbench_candidate_designs",
+    "study_id": "ivt_strategy_studio",
+    "run_id": "run_20260421_workbench_001",
+    "generated_at": "2026-04-21T05:20:00Z",
+    "schema_version": "1.0.0",
+    "payload_hash": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "source_artifacts": [
+      {
+        "artifact_type": "factor_space",
+        "path": "outputs/studies/ivt_strategy_studio/factor_space.json",
+        "artifact_hash": "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+      },
+      {
+        "artifact_type": "candidate_design_set",
+        "path": "outputs/studies/ivt_strategy_studio/candidate_design_sets/candidate_set_iter01_strategy/candidate_design_set.json",
+        "artifact_hash": "sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+      },
+      {
+        "artifact_type": "design_comparison",
+        "path": "outputs/studies/ivt_strategy_studio/comparisons/comparison_iter01_strategy/design_comparison.json",
+        "artifact_hash": "sha256:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd"
+      }
+    ]
+  },
+  "study": {
+    "study_id": "ivt_strategy_studio",
+    "title": "IVT Strategy Studio DOE",
+    "domain_template": "ivt_qbd",
+    "status": "active",
+    "active_design_id": null,
+    "active_fit_id": null,
+    "active_construct_id": null
+  },
+  "factor_space": {
+    "factors": [
+      {
+        "name": "mg_ntp_ratio",
+        "display_name": "Mg:NTP ratio",
+        "units": "ratio",
+        "kind": "continuous",
+        "low": 0.8,
+        "high": 1.6
+      },
+      {
+        "name": "ntp_concentration",
+        "display_name": "NTP concentration",
+        "units": "mM",
+        "kind": "continuous",
+        "low": 6,
+        "high": 12
+      },
+      {
+        "name": "dna_template",
+        "display_name": "DNA template",
+        "units": "ng/uL",
+        "kind": "continuous",
+        "low": 10,
+        "high": 100
+      },
+      {
+        "name": "t7_rnap",
+        "display_name": "T7 RNAP",
+        "units": "U/uL",
+        "kind": "continuous",
+        "low": 2,
+        "high": 15
+      }
+    ]
+  },
+  "responses": [
+    {
+      "name": "mrna_yield",
+      "display_name": "mRNA yield",
+      "units": "g/L",
+      "goal": "maximize"
+    },
+    {
+      "name": "dsrna_score",
+      "display_name": "dsRNA score",
+      "units": "score",
+      "goal": "upper_threshold"
+    }
+  ],
+  "constructs": [],
+  "designs": [],
+  "observations": {},
+  "models": [],
+  "derived": {},
+  "dashboard_state": {
+    "active_workbench_view": "candidate_comparison"
+  },
+  "sections": {
+    "workbench": {
+      "status": "available",
+      "reason": null,
+      "required_inputs": [],
+      "source_artifacts": [
+        "outputs/studies/ivt_strategy_studio/candidate_design_sets/candidate_set_iter01_strategy/candidate_design_set.json"
+      ]
+    },
+    "experiment_matrix": {
+      "status": "unavailable_not_run",
+      "reason": "No candidate design has been committed into a run plan.",
+      "required_inputs": ["commit_run_plan"],
+      "source_artifacts": []
+    },
+    "endpoint_results": {
+      "status": "unavailable_not_run",
+      "reason": "Observed endpoint data has not been imported.",
+      "required_inputs": ["import_endpoint_observations"],
+      "source_artifacts": []
+    },
+    "time_courses": {
+      "status": "unavailable_missing_input",
+      "reason": "Time-resolved observations were not supplied.",
+      "required_inputs": ["time_resolved_observations"],
+      "source_artifacts": []
+    },
+    "effects": {
+      "status": "unavailable_not_run",
+      "reason": "No model fit exists.",
+      "required_inputs": ["fit_response_surface"],
+      "source_artifacts": []
+    },
+    "relative_yield": {
+      "status": "unavailable_missing_input",
+      "reason": "Construct sequence or nucleotide composition was not supplied.",
+      "required_inputs": ["construct_sequence_or_composition"],
+      "source_artifacts": []
+    },
+    "economics": {
+      "status": "unavailable_missing_input",
+      "reason": "Direct component costs were not supplied.",
+      "required_inputs": ["component_costs"],
+      "source_artifacts": []
+    },
+    "recommendations": {
+      "status": "available",
+      "reason": null,
+      "required_inputs": [],
+      "source_artifacts": [
+        "outputs/studies/ivt_strategy_studio/candidate_design_sets/candidate_set_iter01_strategy/candidate_design_set.json"
+      ]
+    },
+    "verification": {
+      "status": "unavailable_not_run",
+      "reason": "Verification planning begins after a design is committed or model results exist.",
+      "required_inputs": ["commit_run_plan"],
+      "source_artifacts": []
+    },
+    "diagnostics": {
+      "status": "available",
+      "reason": null,
+      "required_inputs": [],
+      "source_artifacts": [
+        "outputs/studies/ivt_strategy_studio/candidate_design_sets/candidate_set_iter01_strategy/candidate_design_set.json"
+      ]
+    }
+  },
+  "warnings": [
+    {
+      "code": "pure_error_unavailable",
+      "severity": "warning",
+      "message": "Pure error is unavailable unless the committed plan includes replicated points.",
+      "field": "workbench.candidate_design_sets[0].candidates",
+      "details": {}
+    }
+  ],
+  "audit": {
+    "generated_by": "generate_dashboard_payload",
+    "generated_at": "2026-04-21T05:20:00Z",
+    "method_versions": {
+      "generate_candidate_designs": "0.1.0"
+    }
+  },
+  "workbench": {
+    "mode": "candidate_comparison",
+    "study_stage": "candidates_compared",
+    "recommendation_mode": "fit_curvature",
+    "candidate_design_sets": [
+      {
+        "candidate_set_id": "candidate_set_iter01_strategy",
+        "study_id": "ivt_strategy_studio",
+        "source_snapshot_id": null,
+        "recommendation_mode": "fit_curvature",
+        "generated_at": "2026-04-21T05:20:00Z",
+        "generator_tool": "generate_candidate_designs",
+        "input_hash": "sha256:eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+        "ranking_summary": {
+          "preferred_candidate_design_id": "candidate_dopt_16",
+          "ranking_basis": "Fit curvature within a practical run budget while preserving selected interaction support.",
+          "weights": {
+            "curvature_support": 0.3,
+            "model_rank": 0.25,
+            "prediction_precision": 0.2,
+            "run_count_efficiency": 0.15,
+            "execution_burden": 0.1
+          }
+        },
+        "warnings": [],
+        "candidates": [
+          {
+            "candidate_design_id": "candidate_dopt_16",
+            "design_id": "design_iter01_dopt_16",
+            "design_family": "d_optimal",
+            "status": "recommended",
+            "run_count": 16,
+            "recommendation_label": "Recommended",
+            "ranking_score": 0.88,
+            "best_for": [
+              "Selected interactions",
+              "Curvature-oriented first pass",
+              "Fixed run budget"
+            ],
+            "capabilities": {
+              "main_effects": "supported",
+              "two_factor_interactions": "partially_supported",
+              "quadratic_terms": "partially_supported",
+              "curvature_detection": "partially_supported",
+              "pure_error_estimate": "unsupported",
+              "blocking": "unknown",
+              "randomization": "supported",
+              "missing_run_robustness": "partially_supported",
+              "sequential_augmentation_path": "supported"
+            },
+            "diagnostics": {
+              "model_matrix_rank": 9,
+              "n_model_columns": 9,
+              "condition_number": 18.4,
+              "estimable_term_fraction": 0.82
+            },
+            "tradeoffs": [
+              "Does not estimate every two-factor interaction.",
+              "Pure error requires added replicate or center-point policy."
+            ],
+            "unavailable_reasons": [],
+            "learnability": {
+              "learnable": [
+                {
+                  "claim": "main_effects_estimable",
+                  "label": "Main effects for all four factors are estimable.",
+                  "support": "supported",
+                  "reason_code": null,
+                  "source_ref": "design_metadata.json#diagnostics.model_matrix_rank"
+                },
+                {
+                  "claim": "selected_curvature_terms_estimable",
+                  "label": "Selected curvature terms can be estimated.",
+                  "support": "partially_supported",
+                  "reason_code": null,
+                  "source_ref": "design_metadata.json#diagnostics.estimable_terms"
+                }
+              ],
+              "not_learnable": [
+                {
+                  "claim": "full_quadratic_model_not_estimable",
+                  "label": "A full quadratic model is not estimable from this run count.",
+                  "support": "unsupported",
+                  "reason_code": "target_runs_less_than_model_columns",
+                  "source_ref": "design_metadata.json#warnings"
+                }
+              ]
+            },
+            "source_artifacts": [
+              {
+                "artifact_type": "design_metadata",
+                "path": "outputs/studies/ivt_strategy_studio/designs/design_iter01_dopt_16/design_metadata.json",
+                "artifact_hash": "sha256:ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+              }
+            ],
+            "warnings": []
+          },
+          {
+            "candidate_design_id": "candidate_box_behnken_27",
+            "design_id": "design_iter01_bbd_27",
+            "design_family": "box_behnken",
+            "status": "available_with_warnings",
+            "run_count": 27,
+            "recommendation_label": "Strong curvature support, higher run count",
+            "ranking_score": 0.74,
+            "best_for": [
+              "Curvature",
+              "Response-surface interpretation"
+            ],
+            "capabilities": {
+              "main_effects": "supported",
+              "two_factor_interactions": "supported",
+              "quadratic_terms": "supported",
+              "curvature_detection": "supported",
+              "pure_error_estimate": "partially_supported",
+              "blocking": "unknown",
+              "randomization": "supported",
+              "missing_run_robustness": "partially_supported",
+              "sequential_augmentation_path": "supported"
+            },
+            "diagnostics": {
+              "model_matrix_rank": 15,
+              "n_model_columns": 15,
+              "condition_number": 11.2,
+              "estimable_term_fraction": 1
+            },
+            "tradeoffs": [
+              "Run count may exceed material or time budget.",
+              "Does not sample factor-space corners."
+            ],
+            "unavailable_reasons": [],
+            "learnability": {
+              "learnable": [
+                {
+                  "claim": "full_quadratic_terms_estimable",
+                  "label": "Full quadratic response-surface terms are estimable.",
+                  "support": "supported",
+                  "reason_code": null,
+                  "source_ref": "design_metadata.json#diagnostics.estimable_terms"
+                }
+              ],
+              "not_learnable": [
+                {
+                  "claim": "corner_behavior_not_sampled",
+                  "label": "Corner behavior is not directly sampled.",
+                  "support": "unsupported",
+                  "reason_code": "box_behnken_no_corners",
+                  "source_ref": "design_metadata.json#warnings"
+                }
+              ]
+            },
+            "source_artifacts": [
+              {
+                "artifact_type": "design_metadata",
+                "path": "outputs/studies/ivt_strategy_studio/designs/design_iter01_bbd_27/design_metadata.json",
+                "artifact_hash": "sha256:1111111111111111111111111111111111111111111111111111111111111111"
+              }
+            ],
+            "warnings": [
+              {
+                "code": "run_count_exceeds_preferred_budget",
+                "severity": "warning",
+                "message": "This design exceeds the preferred 20-run budget.",
+                "field": "run_count",
+                "details": {
+                  "run_count": 27,
+                  "preferred_budget": 20
+                }
+              }
+            ]
+          },
+          {
+            "candidate_design_id": "candidate_fractional_8",
+            "design_id": "design_iter01_frac_8",
+            "design_family": "fractional_factorial",
+            "status": "not_recommended",
+            "run_count": 8,
+            "recommendation_label": "Efficient screening only",
+            "ranking_score": 0.41,
+            "best_for": [
+              "Fast main-effect screening"
+            ],
+            "capabilities": {
+              "main_effects": "supported",
+              "two_factor_interactions": "unsupported",
+              "quadratic_terms": "unsupported",
+              "curvature_detection": "unsupported",
+              "pure_error_estimate": "unsupported",
+              "blocking": "unknown",
+              "randomization": "supported",
+              "missing_run_robustness": "unsupported",
+              "sequential_augmentation_path": "partially_supported"
+            },
+            "diagnostics": {
+              "model_matrix_rank": 5,
+              "n_model_columns": 5,
+              "condition_number": 4.8,
+              "estimable_term_fraction": 0.36
+            },
+            "tradeoffs": [
+              "Cannot fit curvature.",
+              "Interactions are aliased with lower-order effects."
+            ],
+            "unavailable_reasons": [],
+            "learnability": {
+              "learnable": [
+                {
+                  "claim": "main_effect_screening",
+                  "label": "Main-effect screening is supported.",
+                  "support": "supported",
+                  "reason_code": null,
+                  "source_ref": "design_metadata.json#diagnostics.model_matrix_rank"
+                }
+              ],
+              "not_learnable": [
+                {
+                  "claim": "curvature_not_estimable",
+                  "label": "Curvature cannot be estimated.",
+                  "support": "unsupported",
+                  "reason_code": "two_level_design_no_curvature",
+                  "source_ref": "design_metadata.json#warnings"
+                }
+              ]
+            },
+            "source_artifacts": [
+              {
+                "artifact_type": "design_metadata",
+                "path": "outputs/studies/ivt_strategy_studio/designs/design_iter01_frac_8/design_metadata.json",
+                "artifact_hash": "sha256:2222222222222222222222222222222222222222222222222222222222222222"
+              }
+            ],
+            "warnings": [
+              {
+                "code": "curvature_not_supported",
+                "severity": "warning",
+                "message": "Two-level screening designs cannot estimate curvature.",
+                "field": "capabilities.curvature_detection",
+                "details": {}
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "active_comparison": {
+      "comparison_id": "comparison_iter01_strategy",
+      "candidate_set_id": "candidate_set_iter01_strategy",
+      "selected_candidate_design_ids": [
+        "candidate_dopt_16",
+        "candidate_box_behnken_27",
+        "candidate_fractional_8"
+      ],
+      "active_metrics": [
+        "run_count",
+        "main_effects",
+        "two_factor_interactions",
+        "quadratic_terms",
+        "condition_number",
+        "pure_error_estimate"
+      ],
+      "preferred_candidate_design_id": "candidate_dopt_16",
+      "user_selected_candidate_design_id": "candidate_dopt_16",
+      "decision_notes": "D-optimal is preferred because it balances selected curvature support with run count.",
+      "generated_at": "2026-04-21T05:20:00Z"
+    },
+    "committed_run_plan": null,
+    "snapshots": [
+      {
+        "snapshot_id": "snapshot_iter01_setup",
+        "label": "Version A: curvature focus",
+        "created_at": "2026-04-21T05:19:00Z",
+        "study_state_hash": "sha256:3333333333333333333333333333333333333333333333333333333333333333",
+        "setup_hash": "sha256:4444444444444444444444444444444444444444444444444444444444444444",
+        "active_candidate_set_id": "candidate_set_iter01_strategy",
+        "active_comparison_id": "comparison_iter01_strategy",
+        "committed_run_plan_id": null,
+        "notes": "Initial response-surface-oriented setup."
+      }
+    ],
+    "stale_state": {
+      "is_stale": false,
+      "stale_due_to": [],
+      "affected_objects": []
+    },
+    "contextual_ai_panels": [
+      {
+        "panel_id": "ai_panel_dopt_why",
+        "object_type": "candidate_design",
+        "object_id": "candidate_dopt_16",
+        "title": "Why this design?",
+        "summary": "The 16-run D-optimal candidate is ranked highest because it supports the selected response-surface terms within a practical run budget. It is a better first workbench recommendation than the 8-run screen because curvature is part of the declared objective.",
+        "best_for": [
+          "Balancing run count and model richness",
+          "Estimating selected interactions and curvature terms"
+        ],
+        "tradeoffs": [
+          "It does not estimate a full quadratic model.",
+          "Pure error is unavailable without adding replicates."
+        ],
+        "watch_out_for": [
+          "Do not treat model-based optimization as verified until confirmation runs exist."
+        ],
+        "source_refs": [
+          "candidate_dopt_16",
+          "outputs/studies/ivt_strategy_studio/designs/design_iter01_dopt_16/design_metadata.json#diagnostics",
+          "outputs/studies/ivt_strategy_studio/candidate_design_sets/candidate_set_iter01_strategy/candidate_design_set.json#ranking_summary"
+        ]
+      }
+    ]
+  }
+}
+

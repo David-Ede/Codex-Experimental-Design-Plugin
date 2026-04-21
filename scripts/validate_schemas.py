@@ -32,6 +32,15 @@ REQUIRED_SCHEMA_FILES = [
     "study.schema.json",
     "factor_space.schema.json",
     "responses.schema.json",
+    "learnability_summary.schema.json",
+    "candidate_design.schema.json",
+    "candidate_design_set.schema.json",
+    "design_comparison.schema.json",
+    "run_plan_commit.schema.json",
+    "study_snapshot.schema.json",
+    "stale_state.schema.json",
+    "contextual_ai_panel.schema.json",
+    "workbench_payload.schema.json",
     "dashboard_payload.schema.json",
 ]
 
@@ -43,6 +52,7 @@ VALID_FIXTURES = [
     ("fixtures/dashboard/empty_payload_state.json", "dashboard_payload.schema.json"),
     ("fixtures/dashboard/perfect_latte_dummy_payload.json", "dashboard_payload.schema.json"),
     ("fixtures/dashboard/phase0_design_only_payload.json", "dashboard_payload.schema.json"),
+    ("fixtures/dashboard/workbench_candidate_designs_payload.json", "dashboard_payload.schema.json"),
 ]
 
 INVALID_FIXTURES = [
@@ -81,6 +91,12 @@ INVALID_FIXTURES = [
         "dashboard_payload.schema.json",
         "schema_validation_failed",
         "version",
+    ),
+    (
+        "fixtures/dashboard/invalid_contextual_ai_panel_missing_source_refs.json",
+        "contextual_ai_panel.schema.json",
+        "schema_validation_failed",
+        "source_refs",
     ),
 ]
 

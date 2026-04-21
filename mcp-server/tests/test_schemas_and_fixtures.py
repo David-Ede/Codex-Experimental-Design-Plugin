@@ -19,3 +19,18 @@ def test_gate0_schema_validation_passes() -> None:
 def test_invalid_fixtures_fail_for_expected_reasons() -> None:
     result = run_validation()
     assert all(expectation.matched for expectation in result.invalid_fixture_expectations)
+
+
+def test_workbench_fixture_schema_coverage() -> None:
+    result = run_validation()
+    workbench_errors = [
+        issue
+        for issue in result.valid_fixture_errors
+        if "workbench" in issue.source or "contextual_ai" in issue.source
+    ]
+    assert workbench_errors == []
+    assert any(
+        expectation.fixture == "fixtures/dashboard/invalid_contextual_ai_panel_missing_source_refs.json"
+        and expectation.matched
+        for expectation in result.invalid_fixture_expectations
+    )
