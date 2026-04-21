@@ -12,6 +12,17 @@ describe("dashboard payload validation", () => {
     }
   });
 
+  it("accepts the perfect latte dummy analytics fixture", () => {
+    const result = validateDashboardPayload(fixturePayloads.latte);
+
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.data.study?.study_id).toBe("perfect_latte_doe");
+      expect(result.data.sections.effects.status).toBe("available");
+      expect(result.data.sections.economics.status).toBe("unavailable_missing_input");
+    }
+  });
+
   it("accepts the empty payload state fixture", () => {
     const result = validateDashboardPayload(fixturePayloads.empty);
 

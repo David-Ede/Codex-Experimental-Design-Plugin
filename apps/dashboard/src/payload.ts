@@ -1,5 +1,6 @@
 import emptyPayloadState from "../../../fixtures/dashboard/empty_payload_state.json";
 import payloadValidationError from "../../../fixtures/dashboard/payload_validation_error.json";
+import perfectLattePayload from "../../../fixtures/dashboard/perfect_latte_dummy_payload.json";
 import phase0DesignOnlyPayload from "../../../fixtures/dashboard/phase0_design_only_payload.json";
 import minimalStudyPayload from "../../../fixtures/studies/minimal_doe/dashboard_payload.json";
 
@@ -96,6 +97,7 @@ export type PayloadValidationResult =
 export const fixturePayloads = {
   empty: emptyPayloadState,
   invalid: payloadValidationError,
+  latte: perfectLattePayload,
   minimal: minimalStudyPayload,
   phase0: phase0DesignOnlyPayload
 } as const;

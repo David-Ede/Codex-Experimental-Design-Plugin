@@ -41,6 +41,7 @@ VALID_FIXTURES = [
     ("fixtures/studies/minimal_doe/responses.json", "responses.schema.json"),
     ("fixtures/studies/minimal_doe/dashboard_payload.json", "dashboard_payload.schema.json"),
     ("fixtures/dashboard/empty_payload_state.json", "dashboard_payload.schema.json"),
+    ("fixtures/dashboard/perfect_latte_dummy_payload.json", "dashboard_payload.schema.json"),
     ("fixtures/dashboard/phase0_design_only_payload.json", "dashboard_payload.schema.json"),
 ]
 

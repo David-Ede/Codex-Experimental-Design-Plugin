@@ -13,6 +13,7 @@ import {
 type TabId =
   | "overview"
   | "matrix"
+  | "results"
   | "time_courses"
   | "effects"
   | "relative_yield"
@@ -24,6 +25,7 @@ type TabId =
 const tabs: Array<{ id: TabId; label: string; section: string }> = [
   { id: "overview", label: "Overview", section: "diagnostics" },
   { id: "matrix", label: "Matrix", section: "experiment_matrix" },
+  { id: "results", label: "Results", section: "endpoint_results" },
   { id: "time_courses", label: "Time Courses", section: "time_courses" },
   { id: "effects", label: "Effects", section: "effects" },
   { id: "relative_yield", label: "Relative Yield", section: "relative_yield" },
@@ -32,6 +34,78 @@ const tabs: Array<{ id: TabId; label: string; section: string }> = [
   { id: "verification", label: "Verification", section: "verification" },
   { id: "diagnostics", label: "Diagnostics", section: "diagnostics" }
 ];
+
+type DataRecord = Record<string, unknown>;
+
+function isRecord(value: unknown): value is DataRecord {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function getRecord(value: unknown): DataRecord | null {
+  return isRecord(value) ? value : null;
+}
+
+function getRecordArray(value: unknown): DataRecord[] {
+  return Array.isArray(value) ? value.filter(isRecord) : [];
+}
+
+function getNestedRecord(source: DataRecord, key: string): DataRecord | null {
+  return getRecord(source[key]);
+}
+
+function getNestedRecordArray(source: DataRecord, key: string): DataRecord[] {
+  return getRecordArray(source[key]);
+}
+
+function getEndpointRows(payload: DashboardPayload): DataRecord[] {
+  const endpoint = getRecord(payload.observations.endpoint);
+  return endpoint ? getNestedRecordArray(endpoint, "rows") : [];
+}
+
+function getString(record: DataRecord, key: string, fallback = "unavailable"): string {
+  const value = record[key];
+  return typeof value === "string" && value.length > 0 ? value : fallback;
+}
+
+function getNumber(record: DataRecord, key: string): number | null {
+  const value = record[key];
+  return typeof value === "number" && Number.isFinite(value) ? value : null;
+}
+
+function getDisplayNumber(record: DataRecord, key: string, digits = 1): string {
+  const value = getNumber(record, key);
+  return value === null ? "unavailable" : value.toFixed(digits);
+}
+
+function formatValue(value: unknown, digits = 1): string {
+  if (typeof value === "number" && Number.isFinite(value)) {
+    return Number.isInteger(value) ? String(value) : value.toFixed(digits);
+  }
+  if (typeof value === "string") {
+    return value;
+  }
+  if (typeof value === "boolean") {
+    return value ? "true" : "false";
+  }
+  return "unavailable";
+}
+
+function formatSigned(value: number, digits = 1): string {
+  const prefix = value > 0 ? "+" : "";
+  return `${prefix}${value.toFixed(digits)}`;
+}
+
+function clampPercent(value: number): number {
+  return Math.min(100, Math.max(0, value));
+}
+
+function getSection(payload: DashboardPayload, section: string): Availability | undefined {
+  return payload.sections[section];
+}
+
+function sectionIsAvailable(payload: DashboardPayload, section: string): boolean {
+  return getSection(payload, section)?.status === "available";
+}
 
 export default function App() {
   const fixtureName = useMemo(() => getFixtureNameFromLocation(window.location.search), []);
@@ -189,6 +263,41 @@ function DashboardContent({ payload, activeTab }: { payload: DashboardPayload; a
   if (activeTab === "matrix") {
     return <MatrixView payload={payload} />;
   }
+  if (activeTab === "results") {
+    return sectionIsAvailable(payload, "endpoint_results") ? (
+      <ResultsView payload={payload} />
+    ) : (
+      <AvailabilityPanel title="Results" availability={payload.sections.endpoint_results} />
+    );
+  }
+  if (activeTab === "effects") {
+    return sectionIsAvailable(payload, "effects") ? (
+      <EffectsView payload={payload} />
+    ) : (
+      <AvailabilityPanel title="Effects" availability={payload.sections.effects} />
+    );
+  }
+  if (activeTab === "relative_yield") {
+    return sectionIsAvailable(payload, "relative_yield") ? (
+      <RelativeYieldView payload={payload} />
+    ) : (
+      <AvailabilityPanel title="Relative Yield" availability={payload.sections.relative_yield} />
+    );
+  }
+  if (activeTab === "recommendations") {
+    return sectionIsAvailable(payload, "recommendations") ? (
+      <RecommendationsView payload={payload} />
+    ) : (
+      <AvailabilityPanel title="Recommendations" availability={payload.sections.recommendations} />
+    );
+  }
+  if (activeTab === "verification") {
+    return sectionIsAvailable(payload, "verification") ? (
+      <VerificationView payload={payload} />
+    ) : (
+      <AvailabilityPanel title="Verification" availability={payload.sections.verification} />
+    );
+  }
   if (activeTab === "diagnostics") {
     return <Diagnostics payload={payload} />;
   }
@@ -337,6 +446,432 @@ function MatrixView({ payload }: { payload: DashboardPayload }) {
             ))}
           </tbody>
         </table>
+      </div>
+    </section>
+  );
+}
+
+function ResultsView({ payload }: { payload: DashboardPayload }) {
+  const rows = getEndpointRows(payload);
+  const scoredRows = rows
+    .map((row) => ({ row, score: getNumber(row, "overall_sensory_score") }))
+    .filter((item): item is { row: DataRecord; score: number } => item.score !== null);
+  const best = scoredRows.reduce<{ row: DataRecord; score: number } | null>(
+    (current, candidate) => (!current || candidate.score > current.score ? candidate : current),
+    null
+  );
+  const average =
+    scoredRows.length > 0
+      ? scoredRows.reduce((total, item) => total + item.score, 0) / scoredRows.length
+      : null;
+
+  if (rows.length === 0) {
+    return <AvailabilityPanel title="Results" availability={payload.sections.endpoint_results} />;
+  }
+
+  return (
+    <section className="panel" aria-labelledby="results-title">
+      <div className="section-heading">
+        <div>
+          <h2 id="results-title">Dummy Endpoint Results</h2>
+          <p>Hand-authored latte outcomes used to exercise the analytics UI. No model fit was run.</p>
+        </div>
+        <StatusBadge status={payload.sections.endpoint_results.status} />
+      </div>
+      <div className="metric-grid">
+        <Metric label="Best run" value={getString(best?.row ?? {}, "run_id")} detail="highest dummy score" />
+        <Metric label="Best score" value={best ? best.score.toFixed(1) : "n/a"} detail="overall sensory" />
+        <Metric label="Mean score" value={average === null ? "n/a" : average.toFixed(1)} detail="12 dummy runs" />
+        <Metric label="Observed rows" value={String(rows.length)} detail="endpoint observations" />
+      </div>
+      <div className="analytics-grid analytics-grid--wide-first">
+        <section className="analytics-block" aria-label="Overall score by run">
+          <div className="section-heading section-heading--compact">
+            <h3>Overall Score By Run</h3>
+            <span className="top-pill">0-10 scale</span>
+          </div>
+          <RunScoreChart rows={rows} bestRunId={getString(best?.row ?? {}, "run_id", "")} />
+        </section>
+        <section className="analytics-block" aria-label="Response snapshot">
+          <div className="section-heading section-heading--compact">
+            <h3>Response Snapshot</h3>
+            <span className="top-pill">selected run</span>
+          </div>
+          <ResponseSnapshot row={best?.row ?? rows[0]} />
+        </section>
+      </div>
+      <EndpointTable rows={rows} />
+    </section>
+  );
+}
+
+function RunScoreChart({ rows, bestRunId }: { rows: DataRecord[]; bestRunId: string }) {
+  return (
+    <div className="score-chart" role="img" aria-label="Bar chart of overall sensory score by run">
+      {rows.map((row) => {
+        const runId = getString(row, "run_id");
+        const score = getNumber(row, "overall_sensory_score") ?? 0;
+        return (
+          <div className="score-column" key={runId}>
+            <div className="score-bar-shell">
+              <span
+                className={runId === bestRunId ? "score-bar score-bar--best" : "score-bar"}
+                style={{ height: `${clampPercent(score * 10)}%` }}
+              >
+                <strong>{score.toFixed(1)}</strong>
+              </span>
+            </div>
+            <small>{runId.replace("run_", "")}</small>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function ResponseSnapshot({ row }: { row: DataRecord }) {
+  const responses = [
+    ["Overall", "overall_sensory_score"],
+    ["Espresso", "espresso_balance_score"],
+    ["Milk", "milk_texture_score"],
+    ["Pour", "latte_art_pourability_score"]
+  ] as const;
+
+  return (
+    <div className="response-bars">
+      <strong>{getString(row, "run_id")}</strong>
+      {responses.map(([label, key]) => {
+        const value = getNumber(row, key) ?? 0;
+        return (
+          <div className="response-bar-row" key={key}>
+            <span>{label}</span>
+            <div className="response-track">
+              <span style={{ width: `${clampPercent(value * 10)}%` }} />
+            </div>
+            <b>{value.toFixed(1)}</b>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function EndpointTable({ rows }: { rows: DataRecord[] }) {
+  const columns = [
+    "run_id",
+    "overall_sensory_score",
+    "espresso_balance_score",
+    "milk_texture_score",
+    "latte_art_pourability_score",
+    "shot_time_s",
+    "extraction_yield_percent"
+  ];
+
+  return (
+    <div className="matrix-wrap analytics-table-wrap">
+      <table className="matrix-table">
+        <thead>
+          <tr>
+            {columns.map((column) => (
+              <th key={column}>{column}</th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((row) => (
+            <tr key={getString(row, "run_id")}>
+              {columns.map((column) => (
+                <td key={column}>{formatValue(row[column])}</td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+function EffectsView({ payload }: { payload: DashboardPayload }) {
+  const effects = getRecord(payload.derived.effects);
+  if (!effects) {
+    return <AvailabilityPanel title="Effects" availability={payload.sections.effects} />;
+  }
+
+  const mainEffects = getNestedRecordArray(effects, "main_effects");
+  const interactions = getNestedRecordArray(effects, "interaction_pairs");
+  const curves = getNestedRecordArray(effects, "response_curves");
+
+  return (
+    <section className="panel" aria-labelledby="effects-title">
+      <div className="section-heading">
+        <div>
+          <h2 id="effects-title">Dummy Effect Analytics</h2>
+          <p>{getString(effects, "note", "Illustrative effect summaries only.")}</p>
+        </div>
+        <StatusBadge status={payload.sections.effects.status} />
+      </div>
+      <div className="analytics-grid">
+        <section className="analytics-block" aria-label="Main effect ranking">
+          <div className="section-heading section-heading--compact">
+            <h3>Main Effect Ranking</h3>
+            <span className="top-pill">dummy effect size</span>
+          </div>
+          <EffectBars effects={mainEffects} />
+        </section>
+        <section className="analytics-block" aria-label="Interaction strength">
+          <div className="section-heading section-heading--compact">
+            <h3>Interaction Strength</h3>
+            <span className="top-pill">relative</span>
+          </div>
+          <InteractionList interactions={interactions} />
+        </section>
+      </div>
+      <div className="curve-grid">
+        {curves.map((curve) => (
+          <ResponseCurve key={getString(curve, "factor")} curve={curve} />
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function EffectBars({ effects }: { effects: DataRecord[] }) {
+  const maxAbs = Math.max(1, ...effects.map((effect) => Math.abs(getNumber(effect, "effect") ?? 0)));
+
+  return (
+    <div className="effect-list">
+      {effects.map((effect) => {
+        const value = getNumber(effect, "effect") ?? 0;
+        const isNegative = value < 0;
+        return (
+          <div className="effect-row" key={`${getString(effect, "factor")}-${getString(effect, "response")}`}>
+            <span>{getString(effect, "display_name")}</span>
+            <div className={isNegative ? "effect-track effect-track--negative" : "effect-track"}>
+              <i style={{ width: `${clampPercent((Math.abs(value) / maxAbs) * 100)}%` }} />
+            </div>
+            <strong>{formatSigned(value)}</strong>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function InteractionList({ interactions }: { interactions: DataRecord[] }) {
+  return (
+    <div className="interaction-list">
+      {interactions.map((interaction) => {
+        const strength = getNumber(interaction, "strength") ?? 0;
+        return (
+          <div className="interaction-row" key={getString(interaction, "label")}>
+            <span>{getString(interaction, "label")}</span>
+            <div className="interaction-meter">
+              <span style={{ width: `${clampPercent(strength * 100)}%` }} />
+            </div>
+            <strong>{strength.toFixed(2)}</strong>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function ResponseCurve({ curve }: { curve: DataRecord }) {
+  const points = getNestedRecordArray(curve, "points")
+    .map((point) => ({
+      x: getNumber(point, "x"),
+      y: getNumber(point, "y")
+    }))
+    .filter((point): point is { x: number; y: number } => point.x !== null && point.y !== null);
+  const xValues = points.map((point) => point.x);
+  const yValues = points.map((point) => point.y);
+  const xMin = Math.min(...xValues);
+  const xMax = Math.max(...xValues);
+  const yMin = Math.min(...yValues);
+  const yMax = Math.max(...yValues);
+  const width = 320;
+  const height = 150;
+  const pad = 18;
+  const xSpan = Math.max(1, xMax - xMin);
+  const ySpan = Math.max(1, yMax - yMin);
+  const polyline = points
+    .map((point) => {
+      const x = pad + ((point.x - xMin) / xSpan) * (width - pad * 2);
+      const y = height - pad - ((point.y - yMin) / ySpan) * (height - pad * 2);
+      return `${x.toFixed(1)},${y.toFixed(1)}`;
+    })
+    .join(" ");
+
+  return (
+    <section className="analytics-block curve-block" aria-label={`${getString(curve, "display_name")} curve`}>
+      <div className="section-heading section-heading--compact">
+        <h3>{getString(curve, "display_name")}</h3>
+        <span className="top-pill">{getString(curve, "units")}</span>
+      </div>
+      <svg className="curve-svg" viewBox={`0 0 ${width} ${height}`} role="img">
+        <line x1={pad} x2={width - pad} y1={height - pad} y2={height - pad} />
+        <line x1={pad} x2={pad} y1={pad} y2={height - pad} />
+        <polyline points={polyline} />
+        {points.map((point) => {
+          const x = pad + ((point.x - xMin) / xSpan) * (width - pad * 2);
+          const y = height - pad - ((point.y - yMin) / ySpan) * (height - pad * 2);
+          return <circle key={`${point.x}-${point.y}`} cx={x} cy={y} r="4" />;
+        })}
+      </svg>
+      <div className="curve-axis">
+        <span>{xMin}</span>
+        <span>overall score</span>
+        <span>{xMax}</span>
+      </div>
+    </section>
+  );
+}
+
+function RelativeYieldView({ payload }: { payload: DashboardPayload }) {
+  const relativeYield = getRecord(payload.derived.relative_yield);
+  if (!relativeYield) {
+    return <AvailabilityPanel title="Relative Yield" availability={payload.sections.relative_yield} />;
+  }
+
+  const rows = getNestedRecordArray(relativeYield, "rows");
+  const targetLow = getNumber(relativeYield, "target_low_percent") ?? 18;
+  const targetHigh = getNumber(relativeYield, "target_high_percent") ?? 22;
+
+  return (
+    <section className="panel" aria-labelledby="relative-yield-title">
+      <div className="section-heading">
+        <div>
+          <h2 id="relative-yield-title">{getString(relativeYield, "label", "Relative Yield")}</h2>
+          <p>Dummy extraction-yield view for comparing each run against a target espresso window.</p>
+        </div>
+        <StatusBadge status={payload.sections.relative_yield.status} />
+      </div>
+      <div className="target-band">
+        <span>Target window</span>
+        <strong>
+          {targetLow.toFixed(1)}-{targetHigh.toFixed(1)}%
+        </strong>
+      </div>
+      <div className="yield-grid">
+        {rows.map((row) => {
+          const runId = getString(row, "run_id");
+          const extraction = getNumber(row, "extraction_yield_percent") ?? 0;
+          const sensory = getNumber(row, "sensory_index_percent") ?? 0;
+          const inTarget = extraction >= targetLow && extraction <= targetHigh;
+          return (
+            <div className={inTarget ? "yield-row yield-row--target" : "yield-row"} key={runId}>
+              <span>{runId}</span>
+              <div className="yield-track">
+                <span style={{ width: `${clampPercent((extraction / 26) * 100)}%` }} />
+              </div>
+              <strong>{extraction.toFixed(1)}%</strong>
+              <small>{sensory.toFixed(0)} sensory index</small>
+            </div>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
+
+function RecommendationsView({ payload }: { payload: DashboardPayload }) {
+  const recommendations = getRecordArray(payload.derived.recommendations);
+  if (recommendations.length === 0) {
+    return <AvailabilityPanel title="Recommendations" availability={payload.sections.recommendations} />;
+  }
+
+  return (
+    <section className="panel" aria-labelledby="recommendations-title">
+      <div className="section-heading">
+        <div>
+          <h2 id="recommendations-title">Dummy Next Runs</h2>
+          <p>Illustrative follow-up settings based on the dummy endpoint results.</p>
+        </div>
+        <StatusBadge status={payload.sections.recommendations.status} />
+      </div>
+      <div className="recommendation-list">
+        {recommendations.map((recommendation) => (
+          <RecommendationItem
+            key={getString(recommendation, "recommendation_id")}
+            recommendation={recommendation}
+          />
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function RecommendationItem({ recommendation }: { recommendation: DataRecord }) {
+  const settings = getNestedRecord(recommendation, "factor_settings") ?? {};
+  const expected = getNestedRecord(recommendation, "expected_responses") ?? {};
+
+  return (
+    <article className="recommendation-item">
+      <div>
+        <span className="eyebrow">{getString(recommendation, "priority")}</span>
+        <h3>{getString(recommendation, "recommendation_id")}</h3>
+        <p>{getString(recommendation, "rationale")}</p>
+      </div>
+      <div className="setting-grid" aria-label="Recommended factor settings">
+        {Object.entries(settings).map(([key, value]) => (
+          <Fact key={key} label={key} value={formatValue(value)} />
+        ))}
+      </div>
+      <div className="expected-grid" aria-label="Expected dummy responses">
+        {Object.entries(expected).map(([key, value]) => (
+          <span key={key}>
+            <strong>{formatValue(value)}</strong>
+            {key}
+          </span>
+        ))}
+      </div>
+    </article>
+  );
+}
+
+function VerificationView({ payload }: { payload: DashboardPayload }) {
+  const plan = getRecord(payload.derived.verification_plan);
+  if (!plan) {
+    return <AvailabilityPanel title="Verification" availability={payload.sections.verification} />;
+  }
+
+  const candidate = getNestedRecord(plan, "candidate_run") ?? {};
+  const criteria = Array.isArray(plan.acceptance_criteria)
+    ? plan.acceptance_criteria.filter((item): item is string => typeof item === "string")
+    : [];
+
+  return (
+    <section className="panel" aria-labelledby="verification-title">
+      <div className="section-heading">
+        <div>
+          <h2 id="verification-title">Verification Plan</h2>
+          <p>Replicate the best dummy setting before treating it as a real latte recipe.</p>
+        </div>
+        <StatusBadge status={payload.sections.verification.status} />
+      </div>
+      <div className="verification-layout">
+        <section className="analytics-block" aria-label="Candidate settings">
+          <div className="section-heading section-heading--compact">
+            <h3>{getString(plan, "verification_id")}</h3>
+            <span className="top-pill">{formatValue(plan.replicates, 0)} repeats</span>
+          </div>
+          <div className="setting-grid">
+            {Object.entries(candidate).map(([key, value]) => (
+              <Fact key={key} label={key} value={formatValue(value)} />
+            ))}
+          </div>
+        </section>
+        <section className="analytics-block" aria-label="Acceptance criteria">
+          <div className="section-heading section-heading--compact">
+            <h3>Acceptance Criteria</h3>
+            <span className="top-pill">holdout</span>
+          </div>
+          <ul className="criteria-list">
+            {criteria.map((criterion) => (
+              <li key={criterion}>{criterion}</li>
+            ))}
+          </ul>
+        </section>
       </div>
     </section>
   );
