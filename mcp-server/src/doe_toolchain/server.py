@@ -738,6 +738,81 @@ def _candidate_by_id(candidate_set: dict[str, Any], candidate_design_id: str) ->
     return None
 
 
+def _unique_append(values: list[str], candidates: list[str]) -> None:
+    seen = set(values)
+    for candidate in candidates:
+        if candidate not in seen:
+            values.append(candidate)
+            seen.add(candidate)
+
+
+def _merge_step_artifacts(steps: list[dict[str, Any]]) -> tuple[list[str], dict[str, str]]:
+    artifact_paths: list[str] = []
+    artifact_hashes: dict[str, str] = {}
+    for step in steps:
+        _unique_append(artifact_paths, list(step.get("artifact_paths", [])))
+        artifact_hashes.update(dict(step.get("artifact_hashes", {})))
+    return artifact_paths, artifact_hashes
+
+
+def _merge_step_warnings(steps: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    warnings: list[dict[str, Any]] = []
+    for step in steps:
+        warnings.extend(list(step.get("warnings", [])))
+    return warnings
+
+
+def _step_summary(tool_name: str, envelope: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "tool_name": tool_name,
+        "run_id": envelope.get("run_id"),
+        "status": envelope.get("status"),
+        "summary": envelope.get("summary"),
+        "artifact_paths": envelope.get("artifact_paths", []),
+    }
+
+
+def _step_run_id(base_run_id: str, suffix: str) -> str:
+    candidate = f"{base_run_id}_{suffix}"
+    if re.match(r"^run_[a-z0-9_]+$", candidate):
+        return candidate
+    return f"run_{_slug(candidate, fallback='workflow')}"
+
+
+def _request_dict(value: Any) -> dict[str, Any]:
+    return dict(value) if isinstance(value, dict) else {}
+
+
+def _study_request_from_workflow(request: dict[str, Any]) -> dict[str, Any]:
+    study_request = _request_dict(request.get("study"))
+    for key in ("title", "domain_template", "status", "active_construct_id", "metadata"):
+        if key in request and key not in study_request:
+            study_request[key] = request[key]
+    return study_request
+
+
+def _candidate_request_from_workflow(request: dict[str, Any]) -> dict[str, Any]:
+    candidate_request = _request_dict(request.get("candidate_request"))
+    for key in (
+        "recommendation_mode",
+        "max_runs",
+        "preferred_max_runs",
+        "strict_max_runs",
+        "candidate_families",
+        "factors",
+        "factor_space",
+        "responses",
+        "constraints",
+        "fixed_conditions",
+        "execution_constraints",
+        "source_snapshot_id",
+        "domain_template",
+    ):
+        if key in request and key not in candidate_request:
+            candidate_request[key] = request[key]
+    return candidate_request
+
+
 def _append_audit(
     *,
     study_id: str,
@@ -1702,6 +1777,243 @@ def commit_run_plan(
 
 
 @_register
+def create_candidate_run_plan(
+    study_id: str | None = None,
+    run_id: str | None = None,
+    request: dict[str, Any] | None = None,
+    options: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    """Create a study, generate candidates, compare the preferred design, and commit a run plan in one call."""
+
+    started = time.perf_counter()
+    tool_name = "create_candidate_run_plan"
+    request = request or {}
+    options = options or {}
+    run_id = run_id or _run_id()
+    input_hash = _canonical_hash(
+        {"study_id": study_id, "run_id": run_id, "request": request, "options": options}
+    )
+    steps: list[dict[str, Any]] = []
+    step_details: list[dict[str, Any]] = []
+
+    def record(name: str, envelope: dict[str, Any]) -> dict[str, Any]:
+        steps.append(envelope)
+        step_details.append(_step_summary(name, envelope))
+        return envelope
+
+    def finish(
+        *,
+        resolved_study_id: str | None,
+        status: str,
+        summary: str,
+        structured_content: dict[str, Any],
+        errors: list[dict[str, Any]] | None = None,
+    ) -> dict[str, Any]:
+        artifact_paths, artifact_hashes = _merge_step_artifacts(steps)
+        warnings = _merge_step_warnings(steps)
+        envelope = _envelope(
+            study_id=resolved_study_id,
+            run_id=run_id,
+            status=status,
+            summary=summary,
+            artifact_paths=artifact_paths,
+            artifact_hashes=artifact_hashes,
+            warnings=warnings,
+            errors=errors or [],
+            structured_content={
+                **structured_content,
+                "steps": step_details,
+                "workflow_duration_ms": int((time.perf_counter() - started) * 1000),
+            },
+        )
+        if resolved_study_id and ID_RE.match(resolved_study_id):
+            _append_audit(
+                study_id=resolved_study_id,
+                run_id=run_id,
+                tool_name=tool_name,
+                status=status,
+                input_hash=input_hash,
+                output_hash=_canonical_hash(envelope),
+                duration_ms=int((time.perf_counter() - started) * 1000),
+                artifact_paths=artifact_paths,
+                warnings=warnings,
+                errors=errors or [],
+                seed=options.get("seed") if isinstance(options.get("seed"), int) else None,
+            )
+        return envelope
+
+    study_request = _study_request_from_workflow(request)
+    create_envelope = record(
+        "create_or_update_study",
+        create_or_update_study(
+            study_id=study_id,
+            run_id=_step_run_id(run_id, "create"),
+            request=study_request,
+            options=options,
+        ),
+    )
+    resolved_study_id = create_envelope.get("study_id")
+    if create_envelope.get("status") not in {"success", "success_with_warnings"}:
+        return finish(
+            resolved_study_id=resolved_study_id if isinstance(resolved_study_id, str) else study_id,
+            status=str(create_envelope.get("status") or "failed_validation"),
+            summary=f"Workflow stopped during create_or_update_study: {create_envelope.get('summary')}",
+            structured_content={"failed_step": "create_or_update_study"},
+            errors=list(create_envelope.get("errors", [])),
+        )
+    if not isinstance(resolved_study_id, str):
+        return finish(
+            resolved_study_id=study_id,
+            status="failed_runtime",
+            summary="Workflow could not resolve a study_id from create_or_update_study.",
+            structured_content={"failed_step": "create_or_update_study"},
+            errors=[_error("invalid_study_id", "create_or_update_study did not return a usable study_id.", "study_id")],
+        )
+
+    candidate_request = _candidate_request_from_workflow(request)
+    candidate_envelope = record(
+        "generate_candidate_designs",
+        generate_candidate_designs(
+            study_id=resolved_study_id,
+            run_id=_step_run_id(run_id, "candidates"),
+            request=candidate_request,
+            options=options,
+        ),
+    )
+    if candidate_envelope.get("status") not in {"success", "success_with_warnings"}:
+        return finish(
+            resolved_study_id=resolved_study_id,
+            status=str(candidate_envelope.get("status") or "failed_validation"),
+            summary=f"Workflow stopped during generate_candidate_designs: {candidate_envelope.get('summary')}",
+            structured_content={"failed_step": "generate_candidate_designs"},
+            errors=list(candidate_envelope.get("errors", [])),
+        )
+
+    candidate_content = _request_dict(candidate_envelope.get("structured_content"))
+    candidate_set_id = candidate_content.get("candidate_set_id")
+    preferred_candidate_design_id = candidate_content.get("preferred_candidate_design_id")
+    selected_candidate_design_id = (
+        request.get("candidate_design_id")
+        or request.get("selected_candidate_design_id")
+        or preferred_candidate_design_id
+    )
+    if not isinstance(candidate_set_id, str) or not isinstance(selected_candidate_design_id, str):
+        return finish(
+            resolved_study_id=resolved_study_id,
+            status="failed_runtime",
+            summary="Workflow could not resolve a candidate set or selected candidate design.",
+            structured_content={"failed_step": "generate_candidate_designs"},
+            errors=[
+                _error(
+                    "candidate_design_not_found",
+                    "Candidate generation did not return candidate_set_id and preferred_candidate_design_id.",
+                    "structured_content",
+                )
+            ],
+        )
+
+    comparison_request = {
+        **_request_dict(request.get("comparison_request")),
+        "candidate_set_id": candidate_set_id,
+        "user_selected_candidate_design_id": selected_candidate_design_id,
+    }
+    if "decision_notes" in request and "decision_notes" not in comparison_request:
+        comparison_request["decision_notes"] = request["decision_notes"]
+    compare_envelope = record(
+        "compare_candidate_designs",
+        compare_candidate_designs(
+            study_id=resolved_study_id,
+            run_id=_step_run_id(run_id, "compare"),
+            request=comparison_request,
+            options=options,
+        ),
+    )
+    if compare_envelope.get("status") not in {"success", "success_with_warnings"}:
+        return finish(
+            resolved_study_id=resolved_study_id,
+            status=str(compare_envelope.get("status") or "failed_validation"),
+            summary=f"Workflow stopped during compare_candidate_designs: {compare_envelope.get('summary')}",
+            structured_content={"failed_step": "compare_candidate_designs"},
+            errors=list(compare_envelope.get("errors", [])),
+        )
+
+    compare_content = _request_dict(compare_envelope.get("structured_content"))
+    comparison_id = compare_content.get("comparison_id")
+    commit_request = {
+        **_request_dict(request.get("commit_request")),
+        "candidate_design_id": selected_candidate_design_id,
+    }
+    if isinstance(comparison_id, str):
+        commit_request["comparison_id"] = comparison_id
+    if "run_plan_id" in request and "run_plan_id" not in commit_request:
+        commit_request["run_plan_id"] = request["run_plan_id"]
+    commit_envelope = record(
+        "commit_run_plan",
+        commit_run_plan(
+            study_id=resolved_study_id,
+            run_id=_step_run_id(run_id, "commit"),
+            request=commit_request,
+            options=options,
+        ),
+    )
+    if commit_envelope.get("status") not in {"success", "success_with_warnings"}:
+        return finish(
+            resolved_study_id=resolved_study_id,
+            status=str(commit_envelope.get("status") or "failed_validation"),
+            summary=f"Workflow stopped during commit_run_plan: {commit_envelope.get('summary')}",
+            structured_content={"failed_step": "commit_run_plan"},
+            errors=list(commit_envelope.get("errors", [])),
+        )
+
+    commit_content = _request_dict(commit_envelope.get("structured_content"))
+    run_plan_id = commit_content.get("run_plan_id")
+    payload_path: str | None = None
+    if bool(request.get("generate_dashboard_payload", True)):
+        dashboard_request = {
+            **_request_dict(request.get("dashboard_request")),
+            "candidate_set_id": candidate_set_id,
+        }
+        if isinstance(comparison_id, str):
+            dashboard_request["comparison_id"] = comparison_id
+        if isinstance(run_plan_id, str):
+            dashboard_request["run_plan_id"] = run_plan_id
+        dashboard_envelope = record(
+            "generate_dashboard_payload",
+            generate_dashboard_payload(
+                study_id=resolved_study_id,
+                run_id=_step_run_id(run_id, "dashboard"),
+                request=dashboard_request,
+                options=options,
+            ),
+        )
+        if dashboard_envelope.get("status") not in {"success", "success_with_warnings"}:
+            return finish(
+                resolved_study_id=resolved_study_id,
+                status=str(dashboard_envelope.get("status") or "failed_validation"),
+                summary=f"Workflow stopped during generate_dashboard_payload: {dashboard_envelope.get('summary')}",
+                structured_content={"failed_step": "generate_dashboard_payload"},
+                errors=list(dashboard_envelope.get("errors", [])),
+            )
+        dashboard_content = _request_dict(dashboard_envelope.get("structured_content"))
+        payload_path = dashboard_content.get("payload_path") if isinstance(dashboard_content.get("payload_path"), str) else None
+
+    status = "success_with_warnings" if _merge_step_warnings(steps) else "success"
+    return finish(
+        resolved_study_id=resolved_study_id,
+        status=status,
+        summary=f"Created candidate run plan {run_plan_id} for {resolved_study_id}.",
+        structured_content={
+            "candidate_set_id": candidate_set_id,
+            "preferred_candidate_design_id": preferred_candidate_design_id,
+            "selected_candidate_design_id": selected_candidate_design_id,
+            "comparison_id": comparison_id,
+            "run_plan_id": run_plan_id,
+            "dashboard_payload_path": payload_path,
+        },
+    )
+
+
+@_register
 def create_study_snapshot(
     study_id: str | None = None,
     run_id: str | None = None,
@@ -2501,6 +2813,14 @@ def launch_dashboard_preview(
             structured_content=structured_content,
         )
 
+    if mode == "return_url_only":
+        structured_content["probe_skipped"] = True
+        return finish(
+            status="success",
+            summary=f"Dashboard preview URL is {url}.",
+            structured_content=structured_content,
+        )
+
     if _probe_dashboard_server(host, port):
         structured_content["server_status"] = "already_running"
         structured_content["instructions"] = "Open the returned dashboard preview URL."
@@ -2510,7 +2830,7 @@ def launch_dashboard_preview(
             structured_content=structured_content,
         )
 
-    if mode in {"return_url_only", "check_existing_server"}:
+    if mode == "check_existing_server":
         return finish(
             status="success",
             summary=f"Dashboard preview URL is {url}.",

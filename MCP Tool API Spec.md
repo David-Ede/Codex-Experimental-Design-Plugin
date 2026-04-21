@@ -3021,6 +3021,7 @@ The workbench redesign adds explicit study-object actions above the existing DOE
 Initial workbench tools:
 
 ```text
+create_candidate_run_plan
 generate_candidate_designs
 rank_candidate_designs
 compare_candidate_designs
@@ -3031,6 +3032,18 @@ explain_study_object
 ```
 
 These tools may initially wrap existing launch tools such as `design_doe`, `design_optimal_doe`, and `generate_dashboard_payload`. The important API change is that candidate generation, comparison, and commitment become explicit artifacts.
+
+`create_candidate_run_plan` is the low-latency convenience path for common first-pass study setup. It wraps:
+
+```text
+create_or_update_study
+generate_candidate_designs
+compare_candidate_designs
+commit_run_plan
+generate_dashboard_payload
+```
+
+It intentionally skips placeholder validation tools and dashboard preview launch unless the caller invokes those tools separately. This avoids redundant round trips when the user wants a committed run matrix and dashboard payload from a single factor/response request.
 
 ### 33.2 Candidate Design Artifacts
 

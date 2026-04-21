@@ -102,7 +102,10 @@ INVALID_FIXTURES = [
 
 UNIT_REGISTRY = {
     "ratio",
+    "mass_ratio",
+    "fraction_total_dna",
     "percent",
+    "%",
     "score",
     "mM",
     "uM",
@@ -111,6 +114,10 @@ UNIT_REGISTRY = {
     "mg/L",
     "ug/mL",
     "ng/uL",
+    "ug/10^6 cells",
+    "10^6 viable cells/mL",
+    "vg/mL",
+    "TU/mL",
     "U/uL",
     "L",
     "mL",

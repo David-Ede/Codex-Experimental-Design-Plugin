@@ -23,3 +23,12 @@ uv --directory mcp-server run python -m doe_toolchain.server --list-tools
 
 Plugin/MCP smoke-test details are documented in
 `docs/plugin_mcp_smoke_test.md`.
+
+## Fast Study Setup
+
+For common first-pass workbench runs, prefer the `create_candidate_run_plan`
+MCP tool. It creates or updates the study, generates candidate designs, compares
+the preferred candidate, commits the run plan, and refreshes the dashboard
+payload in one call. Use `scripts/validate_artifacts.ps1` and
+`scripts/summarize_study.py` for compact follow-up checks without loading full
+payload JSON into the chat context.

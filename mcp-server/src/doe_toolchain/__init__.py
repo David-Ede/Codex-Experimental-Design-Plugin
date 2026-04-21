@@ -23,6 +23,7 @@ LAUNCH_TOOL_NAMES: tuple[str, ...] = (
 )
 
 WORKBENCH_TOOL_NAMES: tuple[str, ...] = (
+    "create_candidate_run_plan",
     "generate_candidate_designs",
     "rank_candidate_designs",
     "compare_candidate_designs",

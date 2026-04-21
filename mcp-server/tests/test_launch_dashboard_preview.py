@@ -43,7 +43,11 @@ def test_launch_dashboard_preview_returns_stable_url_and_audits(
 ) -> None:
     study_id = "dashboard_launch"
     _create_payload(study_id)
-    monkeypatch.setattr(server, "_probe_dashboard_server", lambda host, port: False)
+
+    def fail_probe(host: str, port: int) -> bool:
+        raise AssertionError("return_url_only should not probe the dashboard server")
+
+    monkeypatch.setattr(server, "_probe_dashboard_server", fail_probe)
 
     envelope = launch_dashboard_preview(
         study_id=study_id,
@@ -55,6 +59,7 @@ def test_launch_dashboard_preview_returns_stable_url_and_audits(
     assert envelope["status"] == "success"
     structured = envelope["structured_content"]
     assert structured["server_status"] == "not_started"
+    assert structured["probe_skipped"] is True
     assert structured["payload_path"] == f"outputs/studies/{study_id}/dashboard_payload.json"
     assert f"/studies/{study_id}" in structured["url"]
     assert "payloadUrl=" in structured["url"]
